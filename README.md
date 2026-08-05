@@ -1,29 +1,48 @@
-<h1 align="center">dep-health</h1>
+# dep-health
 
-<p align="center">
-  A health score for every npm dependency in your project.
-</p>
+Health score for every npm dependency in a project. Queries the npm registry for each dependency in `package.json` and calculates a score from 0 to 10 based on version freshness, publish recency, deprecation status, and popularity. Zero runtime dependencies.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript">
-  <img src="https://img.shields.io/badge/Node.js-%3E%3D18-339933?style=flat&logo=node.js&logoColor=white" alt="Node.js >= 18">
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat" alt="MIT License">
-  <img src="https://img.shields.io/badge/Zero_Dependencies-brightgreen?style=flat" alt="Zero Dependencies">
-</p>
+```bash
+npx @barissozudogru/dep-health
+```
 
----
+## Usage
 
-## What It Does
+```bash
+# Analyze current directory
+dep-health
 
-`dep-health` queries the npm registry for every dependency in your `package.json` and returns a score from **0 to 10** for each one. Scores are calculated from four weighted signals: how up-to-date the package is, how recently it was published, whether it is deprecated, and how popular it is. Results are grouped into CRITICAL / WARNING / HEALTHY categories so you can prioritise what needs attention.
+# Analyze a specific project
+dep-health --path ./my-project
 
-It ships with zero runtime dependencies and uses Node's built-in `https` module exclusively.
+# Filter by dependency type
+dep-health --prod-only
+dep-health --dev-only
 
----
+# JSON output
+dep-health --json > report.json
+
+# Fail CI if any dependency scores below threshold
+dep-health --min-score 5
+```
+
+## Options
+
+| Flag | Description | Default |
+|---|---|---|
+| `--path <dir>` | Directory containing `package.json` | Current working directory |
+| `--json` | Output results as JSON instead of formatted text | Off |
+| `--min-score <n>` | Exit with code `1` if any dependency scores below `n` | Off |
+| `--prod-only` | Analyze only `dependencies` (skip `devDependencies`) | Off |
+| `--dev-only` | Analyze only `devDependencies` (skip `dependencies`) | Off |
+| `-v, --version` | Print version and exit | — |
+| `-h, --help` | Show help message | — |
+
+`--prod-only` and `--dev-only` are mutually exclusive.
 
 ## Scoring Breakdown
 
-Each dependency receives a weighted score out of 10. Higher is better.
+Each dependency receives a weighted score out of 10:
 
 | Signal | Weight | Detail |
 |---|---|---|
@@ -32,7 +51,7 @@ Each dependency receives a weighted score out of 10. Higher is better.
 | Deprecation | 20% | Deprecated: 0. Not deprecated: 10. |
 | Popularity | 20% | TypeScript types present: +2. Weekly downloads: tiered 0 – 8. |
 
-**Download tiers** (popularity sub-score):
+Download tiers (popularity sub-score):
 
 | Weekly downloads | Score contribution |
 |---|---|
@@ -42,61 +61,6 @@ Each dependency receives a weighted score out of 10. Higher is better.
 | >= 1,000 | +3 |
 | >= 100 | +1 |
 | < 100 | 0 |
-
----
-
-## Quick Start
-
-```bash
-# Run without installing
-npx @barissozudogru/dep-health
-
-# Or install globally
-npm install -g @barissozudogru/dep-health
-dep-health
-```
-
----
-
-## Usage
-
-```bash
-# Analyze the current directory
-dep-health
-
-# Analyze a specific project
-dep-health --path ./my-project
-
-# Only production dependencies
-dep-health --prod-only
-
-# Only dev dependencies
-dep-health --dev-only
-
-# JSON output for downstream tooling
-dep-health --json > report.json
-
-# CI gate: exit 1 if any dependency scores below 5
-dep-health --min-score 5
-```
-
----
-
-## Options
-
-| Flag | Description | Default |
-|---|---|---|
-| `--path <dir>` | Directory containing `package.json` | Current working directory |
-| `--json` | Output results as JSON instead of the formatted table | Off |
-| `--min-score <n>` | Exit with code `1` if any dependency scores below `n` | Off |
-| `--prod-only` | Analyze only `dependencies` (skip `devDependencies`) | Off |
-| `--dev-only` | Analyze only `devDependencies` (skip `dependencies`) | Off |
-| `-v, --version` | Print version and exit | — |
-| `-h, --help` | Show help message | — |
-
-`--prod-only` and `--dev-only` are mutually exclusive.
-
----
 
 ## Example Output
 
@@ -136,20 +100,16 @@ dep-health  v0.3.0 of my-app  2026-03-12T10:00:00.000Z
   6 packages analyzed  |  2 critical  |  1 warning  |  3 healthy
 ```
 
----
-
 ## CI Integration
 
-Add a step to your CI pipeline to fail the build when dependencies fall below a health threshold.
-
-**GitHub Actions:**
+Add a step to your CI pipeline to enforce a minimum health score:
 
 ```yaml
 - name: Check dependency health
   run: npx @barissozudogru/dep-health --min-score 4
 ```
 
-**With JSON output for artifact upload:**
+With JSON output for artifact upload:
 
 ```yaml
 - name: Dependency health report
@@ -159,8 +119,6 @@ Add a step to your CI pipeline to fail the build when dependencies fall below a 
   run: npx @barissozudogru/dep-health --min-score 4
 ```
 
----
-
 ## Exit Codes
 
 | Code | Meaning |
@@ -168,14 +126,9 @@ Add a step to your CI pipeline to fail the build when dependencies fall below a 
 | `0` | Analysis complete. All dependencies at or above `--min-score` (or no gate set). |
 | `1` | One or more dependencies scored below `--min-score`, or a fatal error occurred. |
 
----
-
 ## Requirements
 
 - Node.js >= 18.0.0
-- No runtime dependencies
-
----
 
 ## License
 
