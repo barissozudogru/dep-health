@@ -80,8 +80,8 @@ function computeVersionDelta(installed: string, latest: string): VersionDelta {
   const [lMaj, lMin, lPat] = lv;
 
   if (lMaj > iMaj) return { major: lMaj - iMaj, minor: 0, patch: 0 };
-  if (lMin > iMin) return { major: 0, minor: lMin - iMin, patch: 0 };
-  if (lPat > iPat) return { major: 0, minor: 0, patch: lPat - iPat };
+  if (lMaj === iMaj && lMin > iMin) return { major: 0, minor: lMin - iMin, patch: 0 };
+  if (lMaj === iMaj && lMin === iMin && lPat > iPat) return { major: 0, minor: 0, patch: lPat - iPat };
   return { major: 0, minor: 0, patch: 0 };
 }
 
