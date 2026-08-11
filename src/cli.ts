@@ -295,9 +295,11 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  console.log(
-    `${isTTY ? "\x1b[36m" : ""}Analyzing dependencies in ${args.targetDir}...${isTTY ? "\x1b[0m" : ""}`
-  );
+  if (!args.jsonMode) {
+    console.log(
+      `${isTTY ? "\x1b[36m" : ""}Analyzing dependencies in ${args.targetDir}...${isTTY ? "\x1b[0m" : ""}`
+    );
+  }
 
   let result: AnalysisResult;
   try {
