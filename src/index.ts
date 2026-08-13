@@ -66,9 +66,13 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
 
 function parseVersion(version: string): [number, number, number] | null {
   const cleaned = version.replace(/^[^0-9]*/, "");
-  const match = cleaned.match(/^(\d+)\.(\d+)\.(\d+)/);
+  const match = cleaned.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
   if (!match) return null;
-  return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+  return [
+    parseInt(match[1], 10),
+    parseInt(match[2] ?? "0", 10),
+    parseInt(match[3] ?? "0", 10),
+  ];
 }
 
 function computeVersionDelta(installed: string, latest: string): VersionDelta {
