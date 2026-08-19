@@ -36,7 +36,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and 
 ### Added
 - Initial release.
 - Fetches registry metadata for every `dependencies` and `devDependencies` entry.
-- Scores each dependency 0 – 10 using freshness, recency, deprecation, and popularity signals.
+- Scores each dependency 0 - 10 using freshness, recency, deprecation, and popularity signals.
 - `--path <dir>` flag to target a project outside the current directory.
 - Concurrent registry requests with a configurable concurrency ceiling.
 - Zero runtime dependencies; uses Node's built-in `https` module.

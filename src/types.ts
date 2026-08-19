@@ -43,7 +43,8 @@ export interface DependencyHealth {
   lastPublished: Date | null;
   versionsBehind: VersionDelta;
   hasTypes: boolean;
-  weeklyDownloads: number;
+  /** null when the registry lookup failed or returned no data. */
+  weeklyDownloads: number | null;
   isDev: boolean;
 }
 
@@ -51,7 +52,8 @@ export interface ScoreBreakdown {
   freshness: number;
   recency: number;
   deprecation: number;
-  popularity: number;
+  /** null when the download count is unknown; the weight is then renormalised. */
+  popularity: number | null;
   total: number;
 }
 
