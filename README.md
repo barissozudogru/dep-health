@@ -35,8 +35,8 @@ dep-health --min-score 5
 | `--min-score <n>` | Exit with code `1` if any dependency scores below `n` | Off |
 | `--prod-only` | Analyze only `dependencies` (skip `devDependencies`) | Off |
 | `--dev-only` | Analyze only `devDependencies` (skip `dependencies`) | Off |
-| `-v, --version` | Print version and exit |  -  |
-| `-h, --help` | Show help message |  -  |
+| `-v, --version` | Print version and exit | - |
+| `-h, --help` | Show help message | - |
 
 `--prod-only` and `--dev-only` are mutually exclusive.
 
