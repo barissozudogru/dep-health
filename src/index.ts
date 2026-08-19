@@ -41,6 +41,17 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
         res.resume();
         return;
       }
+      if (res.statusCode === 429 || (res.statusCode ?? 0) >= 500) {
+        const retryAfter = Number(res.headers["retry-after"]);
+        res.resume();
+        reject(
+          Object.assign(new Error(`HTTP_${res.statusCode}:${url}`), {
+            retryable: true,
+            retryAfterMs: Number.isFinite(retryAfter) ? retryAfter * 1000 : null,
+          })
+        );
+        return;
+      }
       if (res.statusCode !== 200) {
         reject(new Error(`HTTP_${res.statusCode}:${url}`));
         res.resume();
@@ -111,8 +122,13 @@ function scoreDeprecation(deprecated: boolean): number {
   return deprecated ? 0 : 10;
 }
 
-function scorePopularity(hasTypes: boolean, weeklyDownloads: number): number {
-  // 20% weight — raw score 0-10
+function scorePopularity(
+  hasTypes: boolean,
+  weeklyDownloads: number | null
+): number | null {
+  // 20% weight — raw score 0-10, or null when the download count is unknown.
+  // Scoring an unknown count as zero would mark popular packages unpopular.
+  if (weeklyDownloads === null) return null;
   let score = 0;
   if (hasTypes) score += 2;
   // Tiered download score
@@ -124,26 +140,107 @@ function scorePopularity(hasTypes: boolean, weeklyDownloads: number): number {
   return Math.min(10, score);
 }
 
+/**
+ * Weighted average over the signals that are actually available.
+ *
+ * When popularity is unknown its weight is dropped and the remaining weights
+ * are renormalised, so a failed lookup lowers confidence rather than the score.
+ */
 function computeScore(breakdown: Omit<ScoreBreakdown, "total">): ScoreBreakdown {
-  const total =
-    breakdown.freshness * 0.3 +
-    breakdown.recency * 0.3 +
-    breakdown.deprecation * 0.2 +
-    breakdown.popularity * 0.2;
+  const parts: Array<{ value: number; weight: number }> = [
+    { value: breakdown.freshness, weight: 0.3 },
+    { value: breakdown.recency, weight: 0.3 },
+    { value: breakdown.deprecation, weight: 0.2 },
+  ];
+  if (breakdown.popularity !== null) {
+    parts.push({ value: breakdown.popularity, weight: 0.2 });
+  }
+
+  const totalWeight = parts.reduce((sum, p) => sum + p.weight, 0);
+  const weighted = parts.reduce((sum, p) => sum + p.value * p.weight, 0);
+  const total = weighted / totalWeight;
+
   return { ...breakdown, total: Math.round(total * 10) / 10 };
 }
 
-async function fetchWeeklyDownloads(name: string): Promise<number> {
-  try {
-    // The npm downloads API accepts scoped packages as @scope/pkg without encoding the slash.
-    // Encoding the slash breaks the endpoint for scoped packages.
-    const data = await fetchJson<DownloadsResponse>(
-      `${DOWNLOADS_BASE}/${name}`
-    );
-    return data.downloads ?? 0;
-  } catch {
-    return 0;
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * fetchJson with backoff for rate limits and transient server errors.
+ *
+ * The downloads API starts returning 429 after a handful of rapid requests.
+ * Without this, a rate limit surfaced as a failed lookup, which was then scored
+ * as zero popularity, so the same project scored differently on consecutive
+ * runs and a --min-score gate in CI failed at random.
+ */
+async function fetchJsonWithRetry<T>(url: string, attempts = 4): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return await fetchJson<T>(url);
+    } catch (err) {
+      lastErr = err;
+      const retryable = (err as { retryable?: boolean }).retryable === true;
+      if (!retryable || attempt === attempts - 1) throw err;
+      const hinted = (err as { retryAfterMs?: number | null }).retryAfterMs;
+      const backoff = hinted ?? Math.min(4000, 400 * 2 ** attempt);
+      await sleep(backoff);
+    }
   }
+  throw lastErr;
+}
+
+/**
+ * Weekly downloads for many packages at once.
+ *
+ * The npm downloads API accepts a comma-separated list, which turns one request
+ * per dependency into one request per batch and keeps the whole lookup under
+ * the rate limit. Scoped packages are rejected by bulk lookups, so those are
+ * still fetched individually.
+ *
+ * A null value means the count is unknown, which is different from zero and is
+ * scored differently.
+ */
+const BULK_BATCH_SIZE = 100;
+
+async function fetchWeeklyDownloadsMap(
+  names: string[]
+): Promise<Map<string, number | null>> {
+  const result = new Map<string, number | null>();
+  const scoped = names.filter((n) => n.startsWith("@"));
+  const plain = names.filter((n) => !n.startsWith("@"));
+
+  for (let i = 0; i < plain.length; i += BULK_BATCH_SIZE) {
+    const batch = plain.slice(i, i + BULK_BATCH_SIZE);
+    try {
+      const data = await fetchJsonWithRetry<
+        Record<string, DownloadsResponse | null>
+      >(`${DOWNLOADS_BASE}/${batch.join(",")}`);
+      for (const name of batch) {
+        const entry = data[name];
+        result.set(name, entry ? entry.downloads ?? null : null);
+      }
+    } catch {
+      // Unknown, not zero.
+      for (const name of batch) result.set(name, null);
+    }
+  }
+
+  // Scoped packages one at a time, sequentially, to stay under the rate limit.
+  for (const name of scoped) {
+    try {
+      const data = await fetchJsonWithRetry<DownloadsResponse>(
+        `${DOWNLOADS_BASE}/${name}`
+      );
+      result.set(name, data.downloads ?? null);
+    } catch {
+      result.set(name, null);
+    }
+  }
+
+  return result;
 }
 
 function stripVersionRange(version: string): string {
@@ -153,7 +250,8 @@ function stripVersionRange(version: string): string {
 async function analyzePackage(
   name: string,
   installedRange: string,
-  isDev: boolean
+  isDev: boolean,
+  weeklyDownloads: number | null
 ): Promise<DependencyHealth | null> {
   let registry: RegistryPackage;
   try {
@@ -187,7 +285,6 @@ async function analyzePackage(
     !!latestVersionData.typings ||
     name.startsWith("@types/");
 
-  const weeklyDownloads = await fetchWeeklyDownloads(name);
   const versionsBehind = computeVersionDelta(installedVersion, latestVersion);
 
   const rawBreakdown = {
@@ -272,10 +369,14 @@ export async function analyze(
     }
   }
 
+  // One batched request for all download counts instead of one per dependency.
+  // This is what keeps the whole run under the rate limit.
+  const downloads = await fetchWeeklyDownloadsMap(deps.map(([name]) => name));
+
   const tasks = deps.map(
     ([name, version, isDev]) =>
       () =>
-        analyzePackage(name, version, isDev)
+        analyzePackage(name, version, isDev, downloads.get(name) ?? null)
   );
 
   const rawResults = await runConcurrent(tasks, CONCURRENCY, onProgress);
@@ -309,3 +410,7 @@ export async function analyze(
     summary,
   };
 }
+
+// Exported for tests: the scoring rules are where the rate-limit bug surfaced.
+export const computeScoreForTest = computeScore;
+export const scorePopularityForTest = scorePopularity;

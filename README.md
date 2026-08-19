@@ -35,8 +35,8 @@ dep-health --min-score 5
 | `--min-score <n>` | Exit with code `1` if any dependency scores below `n` | Off |
 | `--prod-only` | Analyze only `dependencies` (skip `devDependencies`) | Off |
 | `--dev-only` | Analyze only `devDependencies` (skip `dependencies`) | Off |
-| `-v, --version` | Print version and exit | — |
-| `-h, --help` | Show help message | — |
+| `-v, --version` | Print version and exit |  -  |
+| `-h, --help` | Show help message |  -  |
 
 `--prod-only` and `--dev-only` are mutually exclusive.
 
@@ -49,7 +49,7 @@ Each dependency receives a weighted score out of 10:
 | Freshness | 30% | Major versions behind: -3 each. Minor: -1 each. Patch: -0.5 each. |
 | Recency | 30% | Last publish < 6 months: 10. < 1 year: 7. < 2 years: 4. Older: 1. |
 | Deprecation | 20% | Deprecated: 0. Not deprecated: 10. |
-| Popularity | 20% | TypeScript types present: +2. Weekly downloads: tiered 0 – 8. |
+| Popularity | 20% | TypeScript types present: +2. Weekly downloads: tiered 0 to 8. When the download count is unavailable this signal is dropped and the remaining weights are renormalised, rather than scored as zero. |
 
 Download tiers (popularity sub-score):
 

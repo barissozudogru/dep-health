@@ -172,7 +172,10 @@ function formatAge(date: Date | null): string {
   return `${years}y ago`;
 }
 
-function formatDownloads(n: number): string {
+function formatDownloads(n: number | null): string {
+  // An unknown count is reported as unknown rather than as zero, so a rate
+  // limit is never mistaken for an unpopular package.
+  if (n === null) return "downloads unavailable";
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M/wk`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k/wk`;
   return `${n}/wk`;
@@ -238,7 +241,7 @@ function printPretty(result: AnalysisResult, minScore: number | null): void {
 
       const breakdown = dep.breakdown;
       console.log(
-        `    ${c.dim}freshness:${breakdown.freshness.toFixed(1)}  recency:${breakdown.recency.toFixed(1)}  deprecation:${breakdown.deprecation.toFixed(1)}  popularity:${breakdown.popularity.toFixed(1)}${c.reset}`
+        `    ${c.dim}freshness:${breakdown.freshness.toFixed(1)}  recency:${breakdown.recency.toFixed(1)}  deprecation:${breakdown.deprecation.toFixed(1)}  popularity:${breakdown.popularity === null ? "n/a" : breakdown.popularity.toFixed(1)}${c.reset}`
       );
 
       if (dep.deprecated && dep.deprecationMessage) {
