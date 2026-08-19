@@ -101,13 +101,13 @@ function computeVersionDelta(installed: string, latest: string): VersionDelta {
 }
 
 function scoreFreshness(delta: VersionDelta): number {
-  // 30% weight — raw score 0-10
+  // 30% weight - raw score 0-10
   const raw = 10 - delta.major * 3 - delta.minor * 1 - delta.patch * 0.5;
   return Math.max(0, Math.min(10, raw));
 }
 
 function scoreRecency(lastPublished: Date | null): number {
-  // 30% weight — raw score 0-10
+  // 30% weight - raw score 0-10
   if (!lastPublished) return 1;
   const ageMs = Date.now() - lastPublished.getTime();
   const months = ageMs / (1000 * 60 * 60 * 24 * 30);
@@ -118,7 +118,7 @@ function scoreRecency(lastPublished: Date | null): number {
 }
 
 function scoreDeprecation(deprecated: boolean): number {
-  // 20% weight — 0 or 10
+  // 20% weight - 0 or 10
   return deprecated ? 0 : 10;
 }
 
@@ -126,7 +126,7 @@ function scorePopularity(
   hasTypes: boolean,
   weeklyDownloads: number | null
 ): number | null {
-  // 20% weight — raw score 0-10, or null when the download count is unknown.
+  // 20% weight - raw score 0-10, or null when the download count is unknown.
   // Scoring an unknown count as zero would mark popular packages unpopular.
   if (weeklyDownloads === null) return null;
   let score = 0;
@@ -402,7 +402,7 @@ export async function analyze(
     (r): r is DependencyHealth => r !== null
   );
 
-  // Sort ascending — worst first
+  // Sort ascending - worst first
   results.sort((a, b) => a.score - b.score);
 
   const overallScore =

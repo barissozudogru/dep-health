@@ -105,7 +105,7 @@ function parseArgs(argv: string[]): CliArgs {
 
 function printHelp(): void {
   console.log(`
-dep-health  -  npm dependency health scorer
+dep-health - npm dependency health scorer
 
 USAGE
   dep-health [options]
