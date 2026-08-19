@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeScoreForTest, scorePopularityForTest } from "../dist/index.js";
+import {
+  computeScoreForTest,
+  scorePopularityForTest,
+  isNotFoundForTest,
+  isRetryableStatusForTest,
+} from "../dist/index.js";
 
 /**
  * The npm downloads API rate-limits after a handful of rapid requests. A failed
@@ -60,4 +65,23 @@ test("popularity tiers are unchanged for known counts", () => {
   assert.equal(scorePopularityForTest(true, 2_000_000), 10);
   assert.equal(scorePopularityForTest(false, 500), 1);
   assert.equal(scorePopularityForTest(false, 50), 0);
+});
+
+test("only 404 is treated as a package that is not on the registry", () => {
+  // A 404 means a local path, git dependency or private package, which is
+  // expected and skipped. Any other failure means the analysis would silently
+  // cover fewer packages than reported, so it must stop the run instead.
+  assert.equal(isNotFoundForTest("NOT_FOUND:https://registry.npmjs.org/x"), true);
+  assert.equal(isNotFoundForTest("HTTP_503:https://registry.npmjs.org/x"), false);
+  assert.equal(isNotFoundForTest("HTTP_429:https://registry.npmjs.org/x"), false);
+  assert.equal(isNotFoundForTest("TIMEOUT:https://registry.npmjs.org/x"), false);
+  assert.equal(isNotFoundForTest("PARSE_ERROR:https://registry.npmjs.org/x"), false);
+});
+
+test("a 5xx is retryable so a transient blip does not abort the run", () => {
+  assert.equal(isRetryableStatusForTest(503), true);
+  assert.equal(isRetryableStatusForTest(500), true);
+  assert.equal(isRetryableStatusForTest(429), true);
+  assert.equal(isRetryableStatusForTest(404), false);
+  assert.equal(isRetryableStatusForTest(200), false);
 });

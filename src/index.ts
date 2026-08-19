@@ -258,10 +258,28 @@ async function analyzePackage(
     const encoded = name.startsWith("@")
       ? "@" + encodeURIComponent(name.slice(1))
       : encodeURIComponent(name);
-    registry = await fetchJson<RegistryPackage>(`${REGISTRY_BASE}/${encoded}`);
+    // Retries transient failures before giving up. Without that, a single 429
+    // under concurrency would abort the whole run, and the registry does rate
+    // limit once enough dependencies are looked up at once.
+    registry = await fetchJsonWithRetry<RegistryPackage>(
+      `${REGISTRY_BASE}/${encoded}`
+    );
   } catch (err) {
-    // Package not on registry (local path, git dep, etc.) — skip silently
-    return null;
+    const message = err instanceof Error ? err.message : String(err);
+
+    // A 404 means the package is not on the public registry: a local path, a
+    // git dependency, or a private package. That is expected, so it is skipped.
+    if (message.startsWith("NOT_FOUND")) {
+      return null;
+    }
+
+    // Anything else is a real failure. Skipping it would drop the dependency
+    // from the analysis and report a score that silently covers fewer packages
+    // than the caller thinks.
+    throw new Error(
+      `Registry lookup failed for "${name}": ${message}. ` +
+        `Scores would cover fewer packages than reported, so the run is stopped.`
+    );
   }
 
   const latestVersion = registry["dist-tags"]?.latest ?? "0.0.0";
@@ -409,6 +427,16 @@ export async function analyze(
     overallScore,
     summary,
   };
+}
+
+/** A 404 means the package is not on the public registry, which is expected. */
+export function isNotFoundForTest(message: string): boolean {
+  return message.startsWith("NOT_FOUND");
+}
+
+/** Transient statuses are retried rather than failing the run outright. */
+export function isRetryableStatusForTest(status: number): boolean {
+  return status === 429 || status >= 500;
 }
 
 // Exported for tests: the scoring rules are where the rate-limit bug surfaced.
