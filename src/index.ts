@@ -259,9 +259,12 @@ async function analyzePackage(
       ? "@" + encodeURIComponent(name.slice(1))
       : encodeURIComponent(name);
     registry = await fetchJson<RegistryPackage>(`${REGISTRY_BASE}/${encoded}`);
-  } catch (err) {
+  } catch (err: any) {
     // Package not on registry (local path, git dep, etc.) — skip silently
-    return null;
+    if (err?.message?.startsWith("NOT_FOUND")) {
+      return null;
+    }
+    throw err;
   }
 
   const latestVersion = registry["dist-tags"]?.latest ?? "0.0.0";
