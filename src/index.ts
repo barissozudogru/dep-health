@@ -205,6 +205,40 @@ async function fetchJsonWithRetry<T>(url: string, attempts = 4): Promise<T> {
  */
 const BULK_BATCH_SIZE = 100;
 
+function isSinglePackageResponse(
+  data: DownloadsResponse | Record<string, DownloadsResponse | null>
+): data is DownloadsResponse {
+  // In the keyed bulk shape a "downloads" key would hold a package entry,
+  // never a number, so a numeric downloads field identifies the bare object.
+  return typeof data.downloads === "number";
+}
+
+/**
+ * Reads one bulk downloads response into per-name counts.
+ *
+ * A batch of several names answers with a map keyed by package name, but a
+ * batch of one resolves to the single-package endpoint, which answers with a
+ * bare downloads object. Reading that shape as a keyed map made data[name]
+ * undefined, so the count was recorded as unknown and the popularity signal
+ * was dropped. That hit every project with a single unscoped dependency, plus
+ * the trailing dependency of larger projects after 100-size slicing. Both
+ * shapes are accepted here so the batch size cannot decide whether a count
+ * survives.
+ */
+function parseDownloadsBatch(
+  data: DownloadsResponse | Record<string, DownloadsResponse | null>,
+  batch: string[]
+): Map<string, number | null> {
+  const keyed: Record<string, DownloadsResponse | null> =
+    isSinglePackageResponse(data) ? { [batch[0]]: data } : data;
+  const counts = new Map<string, number | null>();
+  for (const name of batch) {
+    const entry = keyed[name];
+    counts.set(name, entry ? entry.downloads ?? null : null);
+  }
+  return counts;
+}
+
 async function fetchWeeklyDownloadsMap(
   names: string[]
 ): Promise<Map<string, number | null>> {
@@ -216,11 +250,10 @@ async function fetchWeeklyDownloadsMap(
     const batch = plain.slice(i, i + BULK_BATCH_SIZE);
     try {
       const data = await fetchJsonWithRetry<
-        Record<string, DownloadsResponse | null>
+        DownloadsResponse | Record<string, DownloadsResponse | null>
       >(`${DOWNLOADS_BASE}/${batch.join(",")}`);
-      for (const name of batch) {
-        const entry = data[name];
-        result.set(name, entry ? entry.downloads ?? null : null);
+      for (const [name, count] of parseDownloadsBatch(data, batch)) {
+        result.set(name, count);
       }
     } catch {
       // Unknown, not zero.
@@ -442,3 +475,5 @@ export function isRetryableStatusForTest(status: number): boolean {
 // Exported for tests: the scoring rules are where the rate-limit bug surfaced.
 export const computeScoreForTest = computeScore;
 export const scorePopularityForTest = scorePopularity;
+// Exported for tests: the batch parser is where the single-package shape bug surfaced.
+export const parseDownloadsBatchForTest = parseDownloadsBatch;
