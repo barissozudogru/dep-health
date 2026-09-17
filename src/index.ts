@@ -100,6 +100,47 @@ function computeVersionDelta(installed: string, latest: string): VersionDelta {
   return { major: 0, minor: 0, patch: 0 };
 }
 
+function compareVersionTriples(
+  a: [number, number, number],
+  b: [number, number, number]
+): number {
+  if (a[0] !== b[0]) return a[0] - b[0];
+  if (a[1] !== b[1]) return a[1] - b[1];
+  return a[2] - b[2];
+}
+
+/**
+ * The version the installed one is compared against, and the one whose data
+ * decides deprecation and publish time.
+ *
+ * Fully unpublished or security-held packages can serve a packument with no
+ * latest dist-tag. The old fallback to "0.0.0" then matched no published
+ * version, so those packages read as not deprecated and zero versions behind
+ * and scored perfectly on both signals: the least maintainable packages got
+ * the best scores. The highest published version carries the same meaning
+ * when the tag is gone. A release also outranks a prerelease of the same
+ * version, which is how semver and the registry's own latest tag treat them.
+ */
+function resolveLatestVersion(registry: RegistryPackage): string | null {
+  const tagged = registry["dist-tags"]?.latest;
+  if (tagged) return tagged;
+
+  let latest: string | null = null;
+  let latestTriple: [number, number, number] | null = null;
+  for (const version of Object.keys(registry.versions ?? {})) {
+    const triple = parseVersion(version);
+    if (!triple) continue;
+    const cmp = latestTriple ? compareVersionTriples(triple, latestTriple) : 1;
+    const sameVersionRelease =
+      cmp === 0 && latest !== null && latest.includes("-") && !version.includes("-");
+    if (cmp > 0 || sameVersionRelease) {
+      latest = version;
+      latestTriple = triple;
+    }
+  }
+  return latest;
+}
+
 function scoreFreshness(delta: VersionDelta): number {
   // 30% weight - raw score 0-10
   const raw = 10 - delta.major * 3 - delta.minor * 1 - delta.patch * 0.5;
@@ -315,7 +356,16 @@ async function analyzePackage(
     );
   }
 
-  const latestVersion = registry["dist-tags"]?.latest ?? "0.0.0";
+  const latestVersion = resolveLatestVersion(registry);
+  if (!latestVersion) {
+    // No dist-tag and no published version leaves nothing to compare against
+    // or read metadata from. Any score would be invented, and skipping the
+    // dependency would report coverage the run does not have.
+    throw new Error(
+      `Registry data for "${name}" has no dist-tags and no published versions. ` +
+        `Its health cannot be scored, so the run is stopped.`
+    );
+  }
   const installedVersion = stripVersionRange(installedRange);
 
   // Last publish time from the registry time object
@@ -477,3 +527,5 @@ export const computeScoreForTest = computeScore;
 export const scorePopularityForTest = scorePopularity;
 // Exported for tests: the batch parser is where the single-package shape bug surfaced.
 export const parseDownloadsBatchForTest = parseDownloadsBatch;
+// Exported for tests: the version fallback is where the missing dist-tag bug surfaced.
+export const resolveLatestVersionForTest = resolveLatestVersion;
