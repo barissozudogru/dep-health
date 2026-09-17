@@ -485,9 +485,23 @@ export async function analyze(
     (r): r is DependencyHealth => r !== null
   );
 
+  // analyzePackage drops a dependency only on the registry 404 path, so the
+  // declared names missing from the results are exactly the ones that are not
+  // on the public registry. Reporting them keeps the coverage of the score
+  // visible instead of narrowing it silently.
+  const scoredNames = new Set(results.map((r) => r.name));
+  const skippedDependencies = deps
+    .filter(([name]) => !scoredNames.has(name))
+    .map(([name]) => name);
+
   // Sort ascending - worst first
   results.sort((a, b) => a.score - b.score);
 
+  // An empty analysis is evidence for no score at all. The fallback stays a
+  // number so the JSON schema keeps its shape for API consumers; the CLI
+  // refuses to present it as a healthy verdict and fails a --min-score gate
+  // when the emptiness comes from skipped dependencies rather than from a
+  // package.json that declares none.
   const overallScore =
     results.length > 0
       ? Math.round(
@@ -507,6 +521,7 @@ export async function analyze(
     packageVersion: pkg.version ?? "0.0.0",
     analyzedAt: new Date(),
     dependencies: results,
+    skippedDependencies,
     overallScore,
     summary,
   };

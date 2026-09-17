@@ -194,9 +194,20 @@ function formatVersionDelta(dep: DependencyHealth): string {
   return `${parts.join(", ")} behind`;
 }
 
+/**
+ * True when package.json declared dependencies but none resolved on the public
+ * registry, so every lookup took the 404 skip path. The scores in such a
+ * report cover zero packages: this happens behind a private registry mirror or
+ * a proxy that answers 404 for registry.npmjs.org.
+ */
+function nothingScored(result: AnalysisResult): boolean {
+  return result.dependencies.length === 0 && result.skippedDependencies.length > 0;
+}
+
 function printPretty(result: AnalysisResult, minScore: number | null): void {
   const { packageName, packageVersion, dependencies, overallScore, summary, analyzedAt } =
     result;
+  const skipped = result.skippedDependencies;
 
   console.log();
   console.log(
@@ -256,14 +267,35 @@ function printPretty(result: AnalysisResult, minScore: number | null): void {
 
   console.log(`${c.dim}${"─".repeat(72)}${c.reset}`);
 
-  const overallCat = category(overallScore);
-  const overallCol = categoryColor(overallCat);
-  console.log(
-    `  Overall project score:  ${overallCol}${c.bold}${overallScore.toFixed(1)} / 10${c.reset}  (${overallCat})`
-  );
+  if (nothingScored(result)) {
+    console.log();
+    console.log(
+      `${c.red}${c.bold}  WARNING: none of the ${skipped.length} declared dependencies is on the public registry,${c.reset}`
+    );
+    console.log(
+      `${c.red}  so no dependency was scored and this report contains no health evidence:${c.reset}`
+    );
+    for (const name of skipped) {
+      console.log(`    - ${name}`);
+    }
+    console.log(
+      `  Overall project score:  ${c.bold}n/a${c.reset}  (no dependency could be scored)`
+    );
+  } else {
+    const overallCat = category(overallScore);
+    const overallCol = categoryColor(overallCat);
+    console.log(
+      `  Overall project score:  ${overallCol}${c.bold}${overallScore.toFixed(1)} / 10${c.reset}  (${overallCat})`
+    );
+  }
   console.log(
     `  ${c.dim}${summary.total} packages analyzed  |  ${c.red}${summary.critical} critical${c.reset}  ${c.dim}|  ${c.yellow}${summary.warning} warning${c.reset}  ${c.dim}|  ${c.green}${summary.healthy} healthy${c.reset}`
   );
+  if (skipped.length > 0 && !nothingScored(result)) {
+    console.log(
+      `  ${c.dim}Skipped, not on the public registry: ${skipped.join(", ")}${c.reset}`
+    );
+  }
   console.log();
 
   if (minScore !== null) {
@@ -277,6 +309,14 @@ function printPretty(result: AnalysisResult, minScore: number | null): void {
           `    - ${d.name}  (${d.score.toFixed(1)})`
         );
       }
+      console.log();
+      process.exit(1);
+    } else if (nothingScored(result)) {
+      // Passing here would rest on zero scored dependencies, which is how a
+      // private registry project sailed through the gate with a perfect 10.
+      console.log(
+        `${c.red}${c.bold}  CI gate failed: none of the ${skipped.length} declared dependencies could be scored${c.reset}`
+      );
       console.log();
       process.exit(1);
     } else {
@@ -341,7 +381,14 @@ async function main(): Promise<void> {
       const failing = result.dependencies.filter(
         (d) => d.score < args.minScore!
       );
-      if (failing.length > 0) {
+      if (failing.length > 0 || nothingScored(result)) {
+        // The report on stdout carries the evidence; stderr carries the reason
+        // a pipeline sees a nonzero exit next to an empty dependencies array.
+        if (nothingScored(result)) {
+          console.error(
+            `CI gate failed: none of the ${result.skippedDependencies.length} declared dependencies could be scored`
+          );
+        }
         process.exit(1);
       }
     }
