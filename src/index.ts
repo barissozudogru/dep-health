@@ -544,3 +544,5 @@ export const scorePopularityForTest = scorePopularity;
 export const parseDownloadsBatchForTest = parseDownloadsBatch;
 // Exported for tests: the version fallback is where the missing dist-tag bug surfaced.
 export const resolveLatestVersionForTest = resolveLatestVersion;
+// Exported for tests: the retry loop handles transient registry and rate-limit errors.
+export const fetchJsonWithRetryForTest = fetchJsonWithRetry;

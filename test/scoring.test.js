@@ -1,10 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import http from "node:http";
 import {
   computeScoreForTest,
   scorePopularityForTest,
   isNotFoundForTest,
   isRetryableStatusForTest,
+  fetchJsonWithRetryForTest,
 } from "../dist/index.js";
 
 /**
@@ -84,4 +86,32 @@ test("a 5xx is retryable so a transient blip does not abort the run", () => {
   assert.equal(isRetryableStatusForTest(429), true);
   assert.equal(isRetryableStatusForTest(404), false);
   assert.equal(isRetryableStatusForTest(200), false);
+});
+
+test("fetchJsonWithRetry retries on 429 and succeeds on the next attempt", async () => {
+  let calls = 0;
+  const server = http.createServer((req, res) => {
+    calls++;
+    if (calls === 1) {
+      res.writeHead(429);
+      res.end();
+    } else {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    }
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+  const start = Date.now();
+
+  try {
+    const data = await fetchJsonWithRetryForTest(`http://127.0.0.1:${port}/test`);
+    const elapsed = Date.now() - start;
+    assert.deepEqual(data, { ok: true });
+    assert.equal(calls, 2);
+    assert.ok(elapsed >= 350, "backoff must pause before retry");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
