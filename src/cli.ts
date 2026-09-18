@@ -92,6 +92,14 @@ function parseArgs(argv: string[]): CliArgs {
         process.exit(1);
       }
       minScore = val;
+    } else {
+      // A mistyped flag used to fall through silently, which disabled
+      // whatever it was meant to configure: "--min-scor 4" ran with no
+      // gate and exited 0, so a CI pipeline went green without the
+      // check ever happening. Reject instead, before anything runs.
+      console.error(`Unknown argument: ${arg}`);
+      console.error("Run dep-health --help to see the supported options.");
+      process.exit(1);
     }
   }
 
