@@ -18,6 +18,10 @@ const DOWNLOADS_BASE = "https://api.npmjs.org/downloads/point/last-week";
 const CONCURRENCY = 8;
 const REQUEST_TIMEOUT_MS = 15_000;
 
+function isRetryableStatus(status: number): boolean {
+  return status === 429 || status >= 500;
+}
+
 function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
   return new Promise((resolve, reject) => {
     if (redirectCount > 5) {
@@ -41,7 +45,7 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
         res.resume();
         return;
       }
-      if (res.statusCode === 429 || (res.statusCode ?? 0) >= 500) {
+      if (isRetryableStatus(res.statusCode ?? 0)) {
         const retryAfter = Number(res.headers["retry-after"]);
         res.resume();
         reject(
@@ -321,6 +325,10 @@ function stripVersionRange(version: string): string {
   return version.replace(/^[\^~>=<*]+/, "").split(" ")[0];
 }
 
+function isNotFound(message: string): boolean {
+  return message.startsWith("NOT_FOUND");
+}
+
 async function analyzePackage(
   name: string,
   installedRange: string,
@@ -343,7 +351,7 @@ async function analyzePackage(
 
     // A 404 means the package is not on the public registry: a local path, a
     // git dependency, or a private package. That is expected, so it is skipped.
-    if (message.startsWith("NOT_FOUND")) {
+    if (isNotFound(message)) {
       return null;
     }
 
@@ -527,15 +535,9 @@ export async function analyze(
   };
 }
 
-/** A 404 means the package is not on the public registry, which is expected. */
-export function isNotFoundForTest(message: string): boolean {
-  return message.startsWith("NOT_FOUND");
-}
-
-/** Transient statuses are retried rather than failing the run outright. */
-export function isRetryableStatusForTest(status: number): boolean {
-  return status === 429 || status >= 500;
-}
+// Exported for tests: 404 detection and transient retryable HTTP status checks.
+export const isNotFoundForTest = isNotFound;
+export const isRetryableStatusForTest = isRetryableStatus;
 
 // Exported for tests: the scoring rules are where the rate-limit bug surfaced.
 export const computeScoreForTest = computeScore;
