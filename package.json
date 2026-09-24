@@ -1,6 +1,6 @@
 {
   "name": "@barissozudogru/dep-health",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "description": "Score npm dependency health using freshness, recency, deprecation, and adoption signals",
   "bin": {
     "dep-health": "dist/cli.js"
