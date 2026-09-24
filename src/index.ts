@@ -322,7 +322,7 @@ async function fetchWeeklyDownloadsMap(
 }
 
 function stripVersionRange(version: string): string {
-  return version.replace(/^[\^~>=<*]+/, "").split(" ")[0];
+  return version.replace(/^[\^~>=<*]+/, "").trim().split(" ")[0];
 }
 
 function isNotFound(message: string): boolean {
@@ -548,3 +548,5 @@ export const parseDownloadsBatchForTest = parseDownloadsBatch;
 export const resolveLatestVersionForTest = resolveLatestVersion;
 // Exported for tests: the retry loop handles transient registry and rate-limit errors.
 export const fetchJsonWithRetryForTest = fetchJsonWithRetry;
+// Exported for tests: stripping version range prefixes with spaces.
+export const stripVersionRangeForTest = stripVersionRange;
