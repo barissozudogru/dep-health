@@ -203,10 +203,11 @@ function formatVersionDelta(dep: DependencyHealth): string {
 }
 
 /**
- * True when package.json declared dependencies but none resolved on the public
- * registry, so every lookup took the 404 skip path. The scores in such a
- * report cover zero packages: this happens behind a private registry mirror or
- * a proxy that answers 404 for registry.npmjs.org.
+ * True when package.json declared dependencies but none could be scored,
+ * so every dependency took the skip path. The scores in such a report cover
+ * zero packages: this happens behind a private registry mirror or a proxy
+ * that answers 404 for registry.npmjs.org, or when declared dependencies use
+ * non-semver specifiers.
  */
 function nothingScored(result: AnalysisResult): boolean {
   return result.dependencies.length === 0 && result.skippedDependencies.length > 0;
@@ -278,7 +279,7 @@ function printPretty(result: AnalysisResult, minScore: number | null): void {
   if (nothingScored(result)) {
     console.log();
     console.log(
-      `${c.red}${c.bold}  WARNING: none of the ${skipped.length} declared dependencies is on the public registry,${c.reset}`
+      `${c.red}${c.bold}  WARNING: none of the ${skipped.length} declared dependencies could be scored,${c.reset}`
     );
     console.log(
       `${c.red}  so no dependency was scored and this report contains no health evidence:${c.reset}`
@@ -301,7 +302,7 @@ function printPretty(result: AnalysisResult, minScore: number | null): void {
   );
   if (skipped.length > 0 && !nothingScored(result)) {
     console.log(
-      `  ${c.dim}Skipped, not on the public registry: ${skipped.join(", ")}${c.reset}`
+      `  ${c.dim}Skipped, could not be scored: ${skipped.join(", ")}${c.reset}`
     );
   }
   console.log();

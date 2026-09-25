@@ -98,7 +98,7 @@ Overall project score: 7.4 / 10 (HEALTHY)
 
 Registry data changes over time, so repeated runs can legitimately differ. Unknown download data is excluded from the weighted score instead of being treated as zero.
 
-Dependencies that are not on the public registry (git, file, and private packages) cannot be scored. They are named in the report and listed in the JSON output as `skippedDependencies`. When none of the declared dependencies can be resolved, the report says so instead of printing a score, and a `--min-score` gate fails rather than passing on zero evidence.
+Dependencies that cannot be scored (packages not on the public registry or with unparseable version specifiers) are named in the report and listed in the JSON output as `skippedDependencies`. When none of the declared dependencies can be scored, the report says so instead of printing a score, and a `--min-score` gate fails rather than passing on zero evidence.
 
 If this saves you time, consider [starring the repository](https://github.com/barissozudogru/dep-health). It helps other developers find it.
 

@@ -88,7 +88,39 @@ test("a partial skip is visible in the report", () => {
     assert.match(result.stdout, /typescript/);
     assert.match(
       result.stdout,
-      new RegExp(`not on the public registry.*${MISSING_A}`)
+      new RegExp(`could not be scored.*${MISSING_A}`)
     );
+  });
+});
+
+test("dependencies with unparseable versions are skipped instead of scored as up to date", () => {
+  withProject({ express: "github:expressjs/express" }, (dir) => {
+    const result = runCli(["--path", dir, "--json"]);
+    assert.equal(result.status, 0, result.stdout);
+    const report = JSON.parse(result.stdout);
+    assert.deepEqual(report.skippedDependencies, ["express"]);
+    assert.equal(report.dependencies.length, 0);
+  });
+});
+
+test("unparseable versions are reported as skipped without claiming they are not on the public registry", () => {
+  withProject({ typescript: "^5.0.0", express: "github:expressjs/express" }, (dir) => {
+    const result = runCli(["--path", dir]);
+    assert.equal(result.status, 0, result.stdout);
+    assert.match(result.stdout, /typescript/);
+    assert.match(result.stdout, /Skipped, could not be scored: express/);
+    assert.doesNotMatch(result.stdout, /not on the public registry/);
+  });
+});
+
+test("when all dependencies have unparseable versions the warning states none could be scored", () => {
+  withProject({ express: "github:expressjs/express" }, (dir) => {
+    const result = runCli(["--path", dir]);
+    assert.equal(result.status, 0, result.stdout);
+    assert.match(
+      result.stdout,
+      /WARNING: none of the 1 declared dependencies could be scored/
+    );
+    assert.doesNotMatch(result.stdout, /not on the public registry/);
   });
 });
