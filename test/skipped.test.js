@@ -92,3 +92,13 @@ test("a partial skip is visible in the report", () => {
     );
   });
 });
+
+test("dependencies with unparseable versions are skipped instead of scored as up to date", () => {
+  withProject({ express: "github:expressjs/express" }, (dir) => {
+    const result = runCli(["--path", dir, "--json"]);
+    assert.equal(result.status, 0, result.stdout);
+    const report = JSON.parse(result.stdout);
+    assert.deepEqual(report.skippedDependencies, ["express"]);
+    assert.equal(report.dependencies.length, 0);
+  });
+});
