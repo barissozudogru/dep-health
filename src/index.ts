@@ -90,10 +90,13 @@ function parseVersion(version: string): [number, number, number] | null {
   ];
 }
 
-function computeVersionDelta(installed: string, latest: string): VersionDelta {
+function computeVersionDelta(
+  installed: string,
+  latest: string
+): VersionDelta | null {
   const iv = parseVersion(installed);
   const lv = parseVersion(latest);
-  if (!iv || !lv) return { major: 0, minor: 0, patch: 0 };
+  if (!iv || !lv) return null;
 
   const [iMaj, iMin, iPat] = iv;
   const [lMaj, lMin, lPat] = lv;
@@ -395,6 +398,9 @@ async function analyzePackage(
     name.startsWith("@types/");
 
   const versionsBehind = computeVersionDelta(installedVersion, latestVersion);
+  if (!versionsBehind) {
+    return null;
+  }
 
   const rawBreakdown = {
     freshness: scoreFreshness(versionsBehind),
@@ -493,10 +499,9 @@ export async function analyze(
     (r): r is DependencyHealth => r !== null
   );
 
-  // analyzePackage drops a dependency only on the registry 404 path, so the
-  // declared names missing from the results are exactly the ones that are not
-  // on the public registry. Reporting them keeps the coverage of the score
-  // visible instead of narrowing it silently.
+  // analyzePackage drops dependencies that 404 on the registry or use
+  // non-semver specifiers that cannot be parsed. Reporting them keeps the
+  // coverage of the score visible instead of narrowing it silently.
   const scoredNames = new Set(results.map((r) => r.name));
   const skippedDependencies = deps
     .filter(([name]) => !scoredNames.has(name))
@@ -550,3 +555,5 @@ export const resolveLatestVersionForTest = resolveLatestVersion;
 export const fetchJsonWithRetryForTest = fetchJsonWithRetry;
 // Exported for tests: stripping version range prefixes with spaces.
 export const stripVersionRangeForTest = stripVersionRange;
+// Exported for tests: computing version delta between installed and latest.
+export const computeVersionDeltaForTest = computeVersionDelta;

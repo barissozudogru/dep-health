@@ -70,8 +70,8 @@ export interface AnalysisResult {
   analyzedAt: Date;
   dependencies: DependencyHealth[];
   /**
-   * Declared dependencies that are not on the public registry (git, file, or
-   * private packages) and were therefore not scored.
+   * Declared dependencies that could not be scored (packages not on the public
+   * registry or with unparseable version specifiers).
    */
   skippedDependencies: string[];
   overallScore: number;
