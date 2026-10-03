@@ -46,6 +46,22 @@ interface CliArgs {
   devOnly: boolean;
 }
 
+function parseNumericArgument(option: string, value: string | undefined): number {
+  if (
+    value === undefined ||
+    !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)
+  ) {
+    console.error(`${option} requires a numeric argument`);
+    process.exit(1);
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    console.error(`${option} requires a finite numeric argument`);
+    process.exit(1);
+  }
+  return parsed;
+}
+
 function parseArgs(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let targetDir = process.cwd();
@@ -77,21 +93,14 @@ function parseArgs(argv: string[]): CliArgs {
       targetDir = path.resolve(next);
     } else if (arg === "--min-score") {
       const next = args[++i];
-      const val = parseFloat(next ?? "");
-      if (isNaN(val)) {
-        console.error("--min-score requires a numeric argument");
-        process.exit(1);
-      }
-      minScore = val;
+      minScore = parseNumericArgument("--min-score", next);
     } else if (arg.startsWith("--path=")) {
       targetDir = path.resolve(arg.slice("--path=".length));
     } else if (arg.startsWith("--min-score=")) {
-      const val = parseFloat(arg.slice("--min-score=".length));
-      if (isNaN(val)) {
-        console.error("--min-score requires a numeric argument");
-        process.exit(1);
-      }
-      minScore = val;
+      minScore = parseNumericArgument(
+        "--min-score",
+        arg.slice("--min-score=".length)
+      );
     } else {
       // A mistyped flag used to fall through silently, which disabled
       // whatever it was meant to configure: "--min-scor 4" ran with no
