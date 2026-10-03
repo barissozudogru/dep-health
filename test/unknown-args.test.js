@@ -38,3 +38,27 @@ test("a positional argument is rejected rather than ignored", () => {
   assert.equal(result.status, 1, result.stdout);
   assert.match(result.stderr, /my-project/);
 });
+
+test("a minimum score with trailing text is rejected", () => {
+  const result = runCli(["--min-score", "4oops", "--help"]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /--min-score requires a numeric argument/);
+});
+
+test("a minimum score with trailing text is rejected in equals form", () => {
+  const result = runCli(["--min-score=4oops", "--help"]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /--min-score requires a numeric argument/);
+});
+
+test("a non-finite minimum score is rejected", () => {
+  const result = runCli(["--min-score=1e309", "--help"]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /--min-score requires a finite numeric argument/);
+});
+
+test("a finite scientific-notation minimum score remains accepted", () => {
+  const result = runCli(["--min-score=4e2", "--help"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /dep-health - npm dependency health scorer/);
+});
