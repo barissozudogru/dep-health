@@ -115,3 +115,31 @@ test("fetchJsonWithRetry retries on 429 and succeeds on the next attempt", async
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test("fetchJsonWithRetry retries on timeout and succeeds on the next attempt", async () => {
+  let calls = 0;
+  const server = http.createServer((req, res) => {
+    calls++;
+    if (calls === 1) {
+      // Unresponsive on first attempt to trigger request timeout.
+    } else {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    }
+  });
+
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+  const start = Date.now();
+
+  try {
+    const data = await fetchJsonWithRetryForTest(`http://127.0.0.1:${port}/test`);
+    const elapsed = Date.now() - start;
+    assert.deepEqual(data, { ok: true });
+    assert.equal(calls, 2);
+    assert.ok(elapsed >= 15000, "must wait for timeout before retrying");
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+

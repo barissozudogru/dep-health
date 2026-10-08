@@ -73,7 +73,9 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
       res.on("error", reject);
     });
     req.on("timeout", () => {
-      req.destroy(new Error(`TIMEOUT:${url}`));
+      req.destroy(
+        Object.assign(new Error(`TIMEOUT:${url}`), { retryable: true })
+      );
     });
     req.on("error", reject);
   });
