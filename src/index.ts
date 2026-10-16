@@ -83,7 +83,9 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
 
 function parseVersion(version: string): [number, number, number] | null {
   const cleaned = version.replace(/^[^0-9]*/, "");
-  const match = cleaned.match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/);
+  const match = cleaned.match(
+    /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?=[+-]|$)/
+  );
   if (!match) return null;
   return [
     parseInt(match[1], 10),
