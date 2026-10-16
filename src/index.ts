@@ -118,6 +118,44 @@ function compareVersionTriples(
   return a[2] - b[2];
 }
 
+function comparePublishedVersions(a: string, b: string): number {
+  const aMatch = a.replace(/^[^0-9]*/, "").match(
+    /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/
+  );
+  const bMatch = b.replace(/^[^0-9]*/, "").match(
+    /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/
+  );
+  if (!aMatch || !bMatch) return 0;
+
+  const triples = compareVersionTriples(
+    [Number(aMatch[1]), Number(aMatch[2]), Number(aMatch[3])],
+    [Number(bMatch[1]), Number(bMatch[2]), Number(bMatch[3])]
+  );
+  if (triples !== 0) return triples;
+
+  const aPre = aMatch[4]?.split(".") ?? [];
+  const bPre = bMatch[4]?.split(".") ?? [];
+  if (aPre.length === 0 || bPre.length === 0) return aPre.length === 0 ? 1 : -1;
+  for (let i = 0; i < Math.min(aPre.length, bPre.length); i++) {
+    const aIdentifier = aPre[i];
+    const bIdentifier = bPre[i];
+    if (aIdentifier === bIdentifier) continue;
+    const aNumeric = /^\d+$/.test(aIdentifier);
+    const bNumeric = /^\d+$/.test(bIdentifier);
+    if (aNumeric && bNumeric) {
+      const aNormalized = aIdentifier.replace(/^0+/, "") || "0";
+      const bNormalized = bIdentifier.replace(/^0+/, "") || "0";
+      if (aNormalized.length !== bNormalized.length) {
+        return aNormalized.length - bNormalized.length;
+      }
+      return aNormalized < bNormalized ? -1 : 1;
+    }
+    if (aNumeric !== bNumeric) return aNumeric ? -1 : 1;
+    return aIdentifier < bIdentifier ? -1 : 1;
+  }
+  return aPre.length - bPre.length;
+}
+
 /**
  * The version the installed one is compared against, and the one whose data
  * decides deprecation and publish time.
@@ -135,16 +173,12 @@ function resolveLatestVersion(registry: RegistryPackage): string | null {
   if (tagged) return tagged;
 
   let latest: string | null = null;
-  let latestTriple: [number, number, number] | null = null;
   for (const version of Object.keys(registry.versions ?? {})) {
     const triple = parseVersion(version);
     if (!triple) continue;
-    const cmp = latestTriple ? compareVersionTriples(triple, latestTriple) : 1;
-    const sameVersionRelease =
-      cmp === 0 && latest !== null && latest.includes("-") && !version.includes("-");
-    if (cmp > 0 || sameVersionRelease) {
+    const cmp = latest ? comparePublishedVersions(version, latest) : 1;
+    if (cmp > 0) {
       latest = version;
-      latestTriple = triple;
     }
   }
   return latest;
