@@ -46,6 +46,13 @@ test("a missing path value is rejected instead of treating the next flag as a di
   assert.doesNotMatch(result.stdout, /Analyzing dependencies/);
 });
 
+test("an empty path value is rejected instead of defaulting to the current directory", () => {
+  const result = runCli(["--path=", "--help"]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /--path requires a directory argument/);
+  assert.doesNotMatch(result.stdout, /dep-health - npm dependency health scorer/);
+});
+
 test("a minimum score with trailing text is rejected", () => {
   const result = runCli(["--min-score", "4oops", "--help"]);
   assert.equal(result.status, 1, result.stdout);
