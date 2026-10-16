@@ -34,6 +34,7 @@ test("returns null delta when version strings cannot be parsed into semver tripl
   assert.equal(computeVersionDeltaForTest("github:expressjs/express", "4.18.2"), null);
   assert.equal(computeVersionDeltaForTest("workspace:*", "1.0.0"), null);
   assert.equal(computeVersionDeltaForTest("*", "2.0.0"), null);
+  assert.equal(computeVersionDeltaForTest("1.2.3.4", "2.0.0"), null);
   assert.equal(computeVersionDeltaForTest("", "1.0.0"), null);
   assert.equal(computeVersionDeltaForTest("1.0.0", "invalid"), null);
 });
