@@ -86,7 +86,7 @@ function parseArgs(argv: string[]): CliArgs {
       devOnly = true;
     } else if (arg === "--path" || arg === "-p") {
       const next = args[++i];
-      if (!next) {
+      if (!next || next.startsWith("-")) {
         console.error("--path requires a directory argument");
         process.exit(1);
       }
