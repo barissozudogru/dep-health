@@ -95,7 +95,12 @@ function parseArgs(argv: string[]): CliArgs {
       const next = args[++i];
       minScore = parseNumericArgument("--min-score", next);
     } else if (arg.startsWith("--path=")) {
-      targetDir = path.resolve(arg.slice("--path=".length));
+      const value = arg.slice("--path=".length);
+      if (!value) {
+        console.error("--path requires a directory argument");
+        process.exit(1);
+      }
+      targetDir = path.resolve(value);
     } else if (arg.startsWith("--min-score=")) {
       minScore = parseNumericArgument(
         "--min-score",
