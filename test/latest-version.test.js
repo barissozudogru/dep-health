@@ -63,6 +63,30 @@ test("a release outranks a prerelease of the same version", () => {
   assert.equal(resolveLatestVersionForTest(registry), "2.0.0");
 });
 
+test("the highest prerelease wins regardless of identifier shape or insertion order", () => {
+  const cases = [
+    ["2.0.0-rc.2", "2.0.0-rc.10", "2.0.0-rc.10"],
+    ["2.0.0-1", "2.0.0-alpha", "2.0.0-alpha"],
+    ["2.0.0-alpha.1.2", "2.0.0-alpha.1", "2.0.0-alpha.1.2"],
+    ["2.0.0-alpha", "2.0.0-beta", "2.0.0-beta"],
+  ];
+
+  for (const [first, second, expected] of cases) {
+    for (const versions of [
+      { [first]: {}, [second]: {} },
+      { [second]: {}, [first]: {} },
+    ]) {
+      const registry = {
+        name: "example",
+        "dist-tags": {},
+        time: {},
+        versions,
+      };
+      assert.equal(resolveLatestVersionForTest(registry), expected);
+    }
+  }
+});
+
 test("a higher version wins even when only a prerelease of it exists", () => {
   const registry = {
     name: "example",
