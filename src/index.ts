@@ -87,6 +87,19 @@ function parseVersion(version: string): [number, number, number] | null {
     /^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:\.(0|[1-9]\d*))?(?=[+-]|$)/
   );
   if (!match) return null;
+  const suffix = cleaned.slice(match[0].length);
+  const prerelease = suffix.startsWith("-")
+    ? suffix.slice(1).split("+")[0]
+    : "";
+  if (
+    prerelease &&
+    prerelease.split(".").some(
+      (identifier) =>
+        /^\d+$/.test(identifier) && !/^(0|[1-9]\d*)$/.test(identifier)
+    )
+  ) {
+    return null;
+  }
   return [
     parseInt(match[1], 10),
     parseInt(match[2] ?? "0", 10),
