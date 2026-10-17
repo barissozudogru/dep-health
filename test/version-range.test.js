@@ -30,6 +30,17 @@ test("handles space-separated range bounds by selecting the first version", () =
   assert.equal(stripVersionRangeForTest(">=1.2.3 <2.0.0"), "1.2.3");
 });
 
+test("handles OR-separated range bounds without spaces", () => {
+  assert.equal(stripVersionRangeForTest(">=1.2.3||<2.0.0"), "1.2.3");
+  assert.deepEqual(
+    computeVersionDeltaForTest(
+      stripVersionRangeForTest(">=1.2.3||<2.0.0"),
+      "2.0.0"
+    ),
+    { major: 1, minor: 0, patch: 0 }
+  );
+});
+
 test("treats a non-string dependency specifier as unparseable", () => {
   assert.equal(stripVersionRangeForTest(null), "");
 });
