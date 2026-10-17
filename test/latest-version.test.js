@@ -108,6 +108,17 @@ test("a higher version wins even when only a prerelease of it exists", () => {
   assert.equal(resolveLatestVersionForTest(registry), "2.1.0-rc.1");
 });
 
+test("an invalid numeric prerelease is ignored during fallback selection", () => {
+  const registry = {
+    name: "example",
+    "dist-tags": {},
+    time: {},
+    versions: { "1.0.0": {}, "2.0.0-01": {} },
+  };
+  // Numeric prerelease identifiers cannot contain leading zeroes.
+  assert.equal(resolveLatestVersionForTest(registry), "1.0.0");
+});
+
 test("a packument with no dist-tag and no versions resolves to nothing", () => {
   // Nothing here can be scored honestly; the caller stops the run instead.
   assert.equal(resolveLatestVersionForTest({ name: "example", "dist-tags": {}, time: {} }), null);
