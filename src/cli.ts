@@ -94,6 +94,10 @@ function parseArgs(argv: string[]): CliArgs {
     } else if (arg === "--min-score") {
       const next = args[++i];
       minScore = parseNumericArgument("--min-score", next);
+      if (minScore < 0 || minScore > 10) {
+        console.error("--min-score must be between 0 and 10");
+        process.exit(1);
+      }
     } else if (arg.startsWith("--path=")) {
       const value = arg.slice("--path=".length);
       if (!value) {
@@ -106,6 +110,10 @@ function parseArgs(argv: string[]): CliArgs {
         "--min-score",
         arg.slice("--min-score=".length)
       );
+      if (minScore < 0 || minScore > 10) {
+        console.error("--min-score must be between 0 and 10");
+        process.exit(1);
+      }
     } else {
       // A mistyped flag used to fall through silently, which disabled
       // whatever it was meant to configure: "--min-scor 4" ran with no

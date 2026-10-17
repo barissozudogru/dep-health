@@ -71,8 +71,22 @@ test("a non-finite minimum score is rejected", () => {
   assert.match(result.stderr, /--min-score requires a finite numeric argument/);
 });
 
-test("a finite scientific-notation minimum score remains accepted", () => {
+test("a finite scientific-notation minimum score outside the range is rejected", () => {
   const result = runCli(["--min-score=4e2", "--help"]);
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /dep-health - npm dependency health scorer/);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /--min-score must be between 0 and 10/);
+});
+
+test("a negative minimum score is rejected", () => {
+  const result = runCli(["--min-score", "-1", "--help"]);
+  assert.equal(result.status, 1, result.stdout);
+  assert.match(result.stderr, /--min-score must be between 0 and 10/);
+});
+
+test("the minimum score range includes both boundaries", () => {
+  for (const args of [["--min-score", "0"], ["--min-score=10"]]) {
+    const result = runCli([...args, "--help"]);
+    assert.equal(result.status, 0, `${args.join(" ")}: ${result.stderr}`);
+    assert.match(result.stdout, /dep-health - npm dependency health scorer/);
+  }
 });
