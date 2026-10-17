@@ -30,6 +30,10 @@ test("handles space-separated range bounds by selecting the first version", () =
   assert.equal(stripVersionRangeForTest(">=1.2.3 <2.0.0"), "1.2.3");
 });
 
+test("treats a non-string dependency specifier as unparseable", () => {
+  assert.equal(stripVersionRangeForTest(null), "");
+});
+
 test("returns null delta when version strings cannot be parsed into semver triples", () => {
   assert.equal(computeVersionDeltaForTest("github:expressjs/express", "4.18.2"), null);
   assert.equal(computeVersionDeltaForTest("github:owner/package#1.2.3", "2.0.0"), null);

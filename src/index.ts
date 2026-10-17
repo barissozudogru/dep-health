@@ -363,6 +363,7 @@ async function fetchWeeklyDownloadsMap(
 }
 
 function stripVersionRange(version: string): string {
+  if (typeof version !== "string") return "";
   return version.replace(/^[\^~>=<*]+/, "").trim().split(" ")[0];
 }
 
