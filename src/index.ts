@@ -88,9 +88,11 @@ function parseVersion(version: string): [number, number, number] | null {
   );
   if (!match) return null;
   const suffix = cleaned.slice(match[0].length);
-  const prerelease = suffix.startsWith("-")
-    ? suffix.slice(1).split("+")[0]
-    : "";
+  const suffixMatch = suffix.match(
+    /^(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?|\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)$/
+  );
+  if (suffix && !suffixMatch) return null;
+  const prerelease = suffixMatch?.[1] ?? "";
   if (
     prerelease &&
     prerelease.split(".").some(
