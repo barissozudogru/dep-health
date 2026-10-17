@@ -119,6 +119,18 @@ test("an invalid numeric prerelease is ignored during fallback selection", () =>
   assert.equal(resolveLatestVersionForTest(registry), "1.0.0");
 });
 
+test("malformed build metadata is ignored during fallback selection", () => {
+  const registry = {
+    name: "example",
+    "dist-tags": {},
+    time: {},
+    versions: { "2.0.0+": {}, "1.0.0": {} },
+  };
+  // A trailing plus is not valid semver. It must not win merely because it
+  // appears first in the registry response.
+  assert.equal(resolveLatestVersionForTest(registry), "1.0.0");
+});
+
 test("a packument with no dist-tag and no versions resolves to nothing", () => {
   // Nothing here can be scored honestly; the caller stops the run instead.
   assert.equal(resolveLatestVersionForTest({ name: "example", "dist-tags": {}, time: {} }), null);
