@@ -53,6 +53,9 @@ test("returns null delta when version strings cannot be parsed into semver tripl
   assert.equal(computeVersionDeltaForTest("1.2.3.4", "2.0.0"), null);
   assert.equal(computeVersionDeltaForTest("", "1.0.0"), null);
   assert.equal(computeVersionDeltaForTest("1.0.0", "invalid"), null);
+  assert.equal(computeVersionDeltaForTest("01.2.3", "2.0.0"), null);
+  assert.equal(computeVersionDeltaForTest("1.02.3", "2.0.0"), null);
+  assert.equal(computeVersionDeltaForTest("1.2.03", "2.0.0"), null);
 });
 
 test("computes version delta for valid semver versions", () => {
