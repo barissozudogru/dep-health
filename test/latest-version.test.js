@@ -20,6 +20,17 @@ test("a present latest dist-tag decides the version to compare against", () => {
   assert.equal(resolveLatestVersionForTest(registry), "1.4.2");
 });
 
+test("an invalid latest dist-tag falls back to an available published version", () => {
+  const registry = {
+    name: "example",
+    "dist-tags": { latest: "9.9.9" },
+    time: {},
+    versions: { "1.2.3": {} },
+  };
+  // A stale tag must not make the dependency disappear from the analysis.
+  assert.equal(resolveLatestVersionForTest(registry), "1.2.3");
+});
+
 test("an empty dist-tags object falls back to the highest published version", () => {
   const registry = {
     name: "example-unpublished",
