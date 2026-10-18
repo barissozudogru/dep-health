@@ -141,8 +141,7 @@ function computeVersionDelta(
     lMaj === iMaj &&
     lMin === iMin &&
     lPat === iPat &&
-    isPrerelease(installed) &&
-    !isPrerelease(latest)
+    comparePublishedVersions(installed, latest) < 0
   ) {
     return { major: 0, minor: 0, patch: 1 };
   }
