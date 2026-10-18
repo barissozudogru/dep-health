@@ -51,6 +51,8 @@ test("returns null delta when version strings cannot be parsed into semver tripl
   assert.equal(computeVersionDeltaForTest("workspace:*", "1.0.0"), null);
   assert.equal(computeVersionDeltaForTest("*", "2.0.0"), null);
   assert.equal(computeVersionDeltaForTest("1.2.3.4", "2.0.0"), null);
+  assert.equal(computeVersionDeltaForTest("1.2-beta", "2.0.0"), null);
+  assert.equal(computeVersionDeltaForTest("1+build", "2.0.0"), null);
   assert.equal(computeVersionDeltaForTest("", "1.0.0"), null);
   assert.equal(computeVersionDeltaForTest("1.0.0", "invalid"), null);
   assert.equal(computeVersionDeltaForTest("01.2.3", "2.0.0"), null);

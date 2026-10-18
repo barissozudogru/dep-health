@@ -88,6 +88,10 @@ function parseVersion(version: string): [number, number, number] | null {
   );
   if (!match) return null;
   const suffix = cleaned.slice(match[0].length);
+  // Semver prerelease and build metadata require a complete x.y.z version.
+  // Partial ranges such as "1.2" remain valid without a suffix, but values
+  // like "1.2-beta" are not valid versions and must not be scored.
+  if (suffix && match[3] === undefined) return null;
   const suffixMatch = suffix.match(
     /^(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?|\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)$/
   );
