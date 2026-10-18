@@ -31,6 +31,18 @@ test("an invalid latest dist-tag falls back to an available published version", 
   assert.equal(resolveLatestVersionForTest(registry), "1.2.3");
 });
 
+test("ignores partial version keys during published-version fallback", () => {
+  const registry = {
+    name: "example",
+    "dist-tags": {},
+    time: {},
+    versions: { "2.0": {}, "1.0.0": {} },
+  };
+  // Partial versions are valid dependency ranges, but not published semver
+  // versions. They must not win merely because they appear first.
+  assert.equal(resolveLatestVersionForTest(registry), "1.0.0");
+});
+
 test("an existing but malformed latest dist-tag falls back to a valid version", () => {
   const registry = {
     name: "example",
