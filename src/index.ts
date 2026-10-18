@@ -191,7 +191,7 @@ function comparePublishedVersions(a: string, b: string): number {
  */
 function resolveLatestVersion(registry: RegistryPackage): string | null {
   const tagged = registry["dist-tags"]?.latest;
-  if (tagged && registry.versions?.[tagged]) return tagged;
+  if (tagged && registry.versions?.[tagged] && parseVersion(tagged)) return tagged;
 
   let latest: string | null = null;
   for (const version of Object.keys(registry.versions ?? {})) {
