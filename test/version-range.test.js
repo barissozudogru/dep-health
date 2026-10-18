@@ -58,6 +58,15 @@ test("returns null delta when version strings cannot be parsed into semver tripl
   assert.equal(computeVersionDeltaForTest("01.2.3", "2.0.0"), null);
   assert.equal(computeVersionDeltaForTest("1.02.3", "2.0.0"), null);
   assert.equal(computeVersionDeltaForTest("1.2.03", "2.0.0"), null);
+  // Number cannot represent adjacent integer components above 2^53. Reject
+  // them instead of rounding distinct versions to the same value.
+  assert.equal(
+    computeVersionDeltaForTest(
+      "9007199254740992.0.0",
+      "9007199254740993.0.0"
+    ),
+    null
+  );
 });
 
 test("computes version delta for valid semver versions", () => {
