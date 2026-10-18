@@ -195,6 +195,11 @@ function comparePublishedVersions(a: string, b: string): number {
   return aPre.length - bPre.length;
 }
 
+function isCompleteVersion(version: string): boolean {
+  const cleaned = version.replace(/^v(?=\d)/i, "");
+  return /^\d+\.\d+\.\d+(?:[+-]|$)/.test(cleaned) && parseVersion(version) !== null;
+}
+
 /**
  * The version the installed one is compared against, and the one whose data
  * decides deprecation and publish time.
@@ -209,12 +214,11 @@ function comparePublishedVersions(a: string, b: string): number {
  */
 function resolveLatestVersion(registry: RegistryPackage): string | null {
   const tagged = registry["dist-tags"]?.latest;
-  if (tagged && registry.versions?.[tagged] && parseVersion(tagged)) return tagged;
+  if (tagged && registry.versions?.[tagged] && isCompleteVersion(tagged)) return tagged;
 
   let latest: string | null = null;
   for (const version of Object.keys(registry.versions ?? {})) {
-    const triple = parseVersion(version);
-    if (!triple) continue;
+    if (!isCompleteVersion(version)) continue;
     const cmp = latest ? comparePublishedVersions(version, latest) : 1;
     if (cmp > 0) {
       latest = version;
