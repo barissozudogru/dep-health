@@ -106,11 +106,16 @@ function parseVersion(version: string): [number, number, number] | null {
   ) {
     return null;
   }
-  return [
-    parseInt(match[1], 10),
-    parseInt(match[2] ?? "0", 10),
-    parseInt(match[3] ?? "0", 10),
-  ];
+  const triple = [
+    Number(match[1]),
+    Number(match[2] ?? "0"),
+    Number(match[3] ?? "0"),
+  ] as [number, number, number];
+  // Version arithmetic must not silently round components beyond JavaScript's
+  // integer precision. Treat those values as unparseable rather than scoring
+  // distinct versions as equal.
+  if (triple.some((component) => !Number.isSafeInteger(component))) return null;
+  return triple;
 }
 
 function computeVersionDelta(
