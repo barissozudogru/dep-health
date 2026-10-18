@@ -75,3 +75,10 @@ test("computes version delta for valid semver versions", () => {
   assert.deepEqual(computeVersionDeltaForTest("1.1.1", "1.1.5"), { major: 0, minor: 0, patch: 4 });
   assert.deepEqual(computeVersionDeltaForTest("2.0.0", "1.0.0"), { major: 0, minor: 0, patch: 0 });
 });
+
+test("counts a stable release as newer than its prerelease", () => {
+  assert.deepEqual(
+    computeVersionDeltaForTest("1.0.0-beta.1", "1.0.0"),
+    { major: 0, minor: 0, patch: 1 }
+  );
+});

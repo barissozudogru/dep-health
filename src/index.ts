@@ -118,6 +118,11 @@ function parseVersion(version: string): [number, number, number] | null {
   return triple;
 }
 
+function isPrerelease(version: string): boolean {
+  const cleaned = version.replace(/^v(?=\d)/i, "");
+  return /^\d+\.\d+\.\d+-/.test(cleaned);
+}
+
 function computeVersionDelta(
   installed: string,
   latest: string
@@ -132,6 +137,15 @@ function computeVersionDelta(
   if (lMaj > iMaj) return { major: lMaj - iMaj, minor: 0, patch: 0 };
   if (lMaj === iMaj && lMin > iMin) return { major: 0, minor: lMin - iMin, patch: 0 };
   if (lMaj === iMaj && lMin === iMin && lPat > iPat) return { major: 0, minor: 0, patch: lPat - iPat };
+  if (
+    lMaj === iMaj &&
+    lMin === iMin &&
+    lPat === iPat &&
+    isPrerelease(installed) &&
+    !isPrerelease(latest)
+  ) {
+    return { major: 0, minor: 0, patch: 1 };
+  }
   return { major: 0, minor: 0, patch: 0 };
 }
 
