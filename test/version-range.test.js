@@ -82,3 +82,10 @@ test("counts a stable release as newer than its prerelease", () => {
     { major: 0, minor: 0, patch: 1 }
   );
 });
+
+test("counts a newer prerelease of the same version", () => {
+  assert.deepEqual(
+    computeVersionDeltaForTest("1.0.0-beta.1", "1.0.0-beta.2"),
+    { major: 0, minor: 0, patch: 1 }
+  );
+});
