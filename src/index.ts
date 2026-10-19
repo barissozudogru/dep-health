@@ -255,7 +255,13 @@ function scorePopularity(
 ): number | null {
   // 20% weight - raw score 0-10, or null when the download count is unknown.
   // Scoring an unknown count as zero would mark popular packages unpopular.
-  if (weeklyDownloads === null) return null;
+  if (
+    weeklyDownloads === null ||
+    !Number.isFinite(weeklyDownloads) ||
+    weeklyDownloads < 0
+  ) {
+    return null;
+  }
   let score = 0;
   if (hasTypes) score += 2;
   // Tiered download score
