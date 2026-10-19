@@ -25,6 +25,16 @@ test("strips comparison operators with spaces without producing an empty version
   assert.equal(stripVersionRangeForTest("> 1.0.0"), "1.0.0");
 });
 
+test("accepts leading whitespace before a version range operator", () => {
+  const installed = stripVersionRangeForTest("  ^1.2.3  ");
+  assert.equal(installed, "1.2.3");
+  assert.deepEqual(computeVersionDeltaForTest(installed, "2.0.0"), {
+    major: 1,
+    minor: 0,
+    patch: 0,
+  });
+});
+
 test("handles space-separated range bounds by selecting the first version", () => {
   assert.equal(stripVersionRangeForTest(">= 1.2.3 < 2.0.0"), "1.2.3");
   assert.equal(stripVersionRangeForTest(">=1.2.3 <2.0.0"), "1.2.3");
