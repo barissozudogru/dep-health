@@ -18,6 +18,7 @@ import {
 test("an unknown download count is not scored as zero", () => {
   assert.equal(scorePopularityForTest(false, null), null);
   assert.equal(scorePopularityForTest(true, null), null);
+  assert.equal(scorePopularityForTest(false, -1), null);
   // Zero is still a real, meaningful value when the registry actually says so.
   assert.equal(scorePopularityForTest(false, 0), 0);
 });
