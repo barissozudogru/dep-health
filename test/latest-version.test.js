@@ -54,6 +54,16 @@ test("an existing but malformed latest dist-tag falls back to a valid version", 
   assert.equal(resolveLatestVersionForTest(registry), "1.2.3");
 });
 
+test("a non-string latest dist-tag falls back to a valid version", () => {
+  const registry = {
+    name: "example",
+    "dist-tags": { latest: 123 },
+    time: {},
+    versions: { "123": {}, "1.2.3": {} },
+  };
+  assert.equal(resolveLatestVersionForTest(registry), "1.2.3");
+});
+
 test("an empty dist-tags object falls back to the highest published version", () => {
   const registry = {
     name: "example-unpublished",
