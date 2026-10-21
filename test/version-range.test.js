@@ -55,6 +55,19 @@ test("treats a non-string dependency specifier as unparseable", () => {
   assert.equal(stripVersionRangeForTest(null), "");
 });
 
+test("does not turn malformed operator prefixes into valid versions", () => {
+  for (const specifier of ["^^1.2.3", "*1.2.3", "^~1.2.3", "=>1.2.3"]) {
+    assert.equal(
+      computeVersionDeltaForTest(
+        stripVersionRangeForTest(specifier),
+        "2.0.0"
+      ),
+      null,
+      specifier
+    );
+  }
+});
+
 test("returns null delta when version strings cannot be parsed into semver triples", () => {
   assert.equal(computeVersionDeltaForTest("github:expressjs/express", "4.18.2"), null);
   assert.equal(computeVersionDeltaForTest("github:owner/package#1.2.3", "2.0.0"), null);
