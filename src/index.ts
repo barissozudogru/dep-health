@@ -417,7 +417,9 @@ async function fetchWeeklyDownloadsMap(
 
 function stripVersionRange(version: string): string {
   if (typeof version !== "string") return "";
-  return version.trim().replace(/^[\^~>=<*]+/, "").trim().split(/\s+|\|\|/)[0];
+  const trimmed = version.trim();
+  const operator = trimmed.match(/^(?:\^|~|>=|<=|>|<|=)\s*/)?.[0] ?? "";
+  return trimmed.slice(operator.length).trim().split(/\s+|\|\|/)[0];
 }
 
 function isNotFound(message: string): boolean {
