@@ -428,6 +428,17 @@ function isNotFound(message: string): boolean {
   return message.startsWith("NOT_FOUND");
 }
 
+function collectSkippedDependencies(
+  deps: Array<[string, string, boolean]>,
+  rawResults: Array<DependencyHealth | null>
+): string[] {
+  return [...new Set(
+    deps
+      .filter((_, index) => rawResults[index] === null)
+      .map(([name]) => name)
+  )];
+}
+
 async function analyzePackage(
   name: string,
   installedRange: string,
@@ -598,10 +609,7 @@ export async function analyze(
   // analyzePackage drops dependencies that 404 on the registry or use
   // non-semver specifiers that cannot be parsed. Reporting them keeps the
   // coverage of the score visible instead of narrowing it silently.
-  const scoredNames = new Set(results.map((r) => r.name));
-  const skippedDependencies = deps
-    .filter(([name]) => !scoredNames.has(name))
-    .map(([name]) => name);
+  const skippedDependencies = collectSkippedDependencies(deps, rawResults);
 
   // Sort ascending - worst first
   results.sort((a, b) => a.score - b.score);
@@ -653,3 +661,4 @@ export const fetchJsonWithRetryForTest = fetchJsonWithRetry;
 export const stripVersionRangeForTest = stripVersionRange;
 // Exported for tests: computing version delta between installed and latest.
 export const computeVersionDeltaForTest = computeVersionDelta;
+export const collectSkippedDependenciesForTest = collectSkippedDependencies;
