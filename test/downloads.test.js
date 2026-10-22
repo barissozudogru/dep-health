@@ -50,3 +50,15 @@ test("a null entry in a keyed response stays unknown rather than zero", () => {
   const counts = parseDownloadsBatchForTest(keyed, ["does-not-exist"]);
   assert.equal(counts.get("does-not-exist"), null);
 });
+
+test("a bare response cannot assign one package count to a multi-name batch", () => {
+  const single = {
+    downloads: 394117801,
+    start: "2026-09-05",
+    end: "2026-09-11",
+    package: "ms",
+  };
+  const counts = parseDownloadsBatchForTest(single, ["ms", "typescript"]);
+  assert.equal(counts.get("ms"), null);
+  assert.equal(counts.get("typescript"), null);
+});

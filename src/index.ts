@@ -369,7 +369,9 @@ function parseDownloadsBatch(
   batch: string[]
 ): Map<string, number | null> {
   const keyed: Record<string, DownloadsResponse | null> =
-    isSinglePackageResponse(data) ? { [batch[0]]: data } : data;
+    batch.length === 1 && isSinglePackageResponse(data)
+      ? { [batch[0]]: data }
+      : (data as Record<string, DownloadsResponse | null>);
   const counts = new Map<string, number | null>();
   for (const name of batch) {
     const entry = keyed[name];
