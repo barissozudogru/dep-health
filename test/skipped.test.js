@@ -4,6 +4,19 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import * as depHealth from "../dist/index.js";
+
+// Keep the baseline runnable when the candidate's test export is absent. The
+// fallback mirrors the old name-based reporting that the regression rejects.
+const collectSkippedDependenciesForTest =
+  depHealth.collectSkippedDependenciesForTest ?? ((deps, rawResults) => {
+    const scoredNames = new Set(
+      rawResults.filter((result) => result !== null).map((result) => result.name)
+    );
+    return deps
+      .filter(([name]) => !scoredNames.has(name))
+      .map(([name]) => name);
+  });
 
 /**
  * When every declared dependency 404s on the public registry, which happens
@@ -48,6 +61,21 @@ function withProject(dependencies, fn) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 }
+
+test("a skipped duplicate declaration is not hidden by a scored occurrence", () => {
+  const deps = [
+    ["example", "^1.0.0", false],
+    ["example", "github:owner/example", true],
+  ];
+  const scored = {
+    name: "example",
+  };
+
+  assert.deepEqual(
+    collectSkippedDependenciesForTest(deps, [scored, null]),
+    ["example"]
+  );
+});
 
 test("a project whose dependencies all 404 fails the gate instead of passing", () => {
   withProject({ [MISSING_A]: "^1.0.0", [MISSING_B]: "^2.0.0" }, (dir) => {
