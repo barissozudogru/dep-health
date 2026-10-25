@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
+import { EventEmitter } from "node:events";
 import {
   computeScoreForTest,
   scorePopularityForTest,
@@ -141,6 +142,44 @@ test("fetchJsonWithRetry retries on timeout and succeeds on the next attempt", a
     assert.ok(elapsed >= 15000, "must wait for timeout before retrying");
   } finally {
     await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test("follows all standard HTTP redirects", async () => {
+  const originalGet = http.get;
+  let calls = 0;
+  http.get = (url, options, callback) => {
+    const request = new EventEmitter();
+    queueMicrotask(() => {
+      const response = new EventEmitter();
+      if (calls++ % 2 === 0) {
+        const status = Number(new URL(url).searchParams.get("status"));
+        response.statusCode = status;
+        response.headers = { location: "http://redirect.test/payload" };
+        response.resume = () => {};
+      } else {
+        response.statusCode = 200;
+        response.headers = {};
+        response.resume = () => {};
+        queueMicrotask(() => {
+          response.emit("data", Buffer.from(JSON.stringify({ ok: true })));
+          response.emit("end");
+        });
+      }
+      callback(response);
+    });
+    return request;
+  };
+
+  try {
+    for (const status of [301, 302, 303, 307, 308]) {
+      const data = await fetchJsonWithRetryForTest(
+        `http://redirect.test/redirect?status=${status}`
+      );
+      assert.deepEqual(data, { ok: true }, String(status));
+    }
+  } finally {
+    http.get = originalGet;
   }
 });
 
