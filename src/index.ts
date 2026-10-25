@@ -260,6 +260,12 @@ function scoreRecency(lastPublished: Date | null): number {
   return 1;
 }
 
+function parsePublishedDate(value: unknown): Date | null {
+  if (typeof value !== "string") return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function scoreDeprecation(deprecated: boolean): number {
   // 20% weight - 0 or 10
   return deprecated ? 0 : 10;
@@ -499,7 +505,7 @@ async function analyzePackage(
   // Last publish time from the registry time object
   const lastPublishStr =
     registry.time?.[latestVersion] ?? registry.time?.modified ?? null;
-  const lastPublished = lastPublishStr ? new Date(lastPublishStr) : null;
+  const lastPublished = parsePublishedDate(lastPublishStr);
 
   const latestVersionData: VersionData =
     registry.versions?.[latestVersion] ?? {};
@@ -672,3 +678,4 @@ export const stripVersionRangeForTest = stripVersionRange;
 // Exported for tests: computing version delta between installed and latest.
 export const computeVersionDeltaForTest = computeVersionDelta;
 export const collectSkippedDependenciesForTest = collectSkippedDependencies;
+export const parsePublishedDateForTest = parsePublishedDate;

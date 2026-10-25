@@ -2,13 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { EventEmitter } from "node:events";
-import {
+import * as depHealth from "../dist/index.js";
+
+const {
   computeScoreForTest,
   scorePopularityForTest,
   isNotFoundForTest,
   isRetryableStatusForTest,
   fetchJsonWithRetryForTest,
-} from "../dist/index.js";
+} = depHealth;
+
+// Keep the baseline runnable when the candidate's test export is absent. The
+// fallback preserves the old parsing behavior so the regression fails there.
+const parsePublishedDateForTest =
+  depHealth.parsePublishedDateForTest ??
+  ((value) => (value ? new Date(value) : null));
 
 /**
  * The npm downloads API rate-limits after a handful of rapid requests. A failed
@@ -69,6 +77,15 @@ test("popularity tiers are unchanged for known counts", () => {
   assert.equal(scorePopularityForTest(true, 2_000_000), 10);
   assert.equal(scorePopularityForTest(false, 500), 1);
   assert.equal(scorePopularityForTest(false, 50), 0);
+});
+
+test("an invalid publish timestamp becomes unknown instead of poisoning the score", () => {
+  assert.equal(parsePublishedDateForTest("not-a-date"), null);
+  assert.equal(parsePublishedDateForTest(123), null);
+  assert.equal(
+    parsePublishedDateForTest("2026-09-11T00:00:00.000Z")?.toISOString(),
+    "2026-09-11T00:00:00.000Z"
+  );
 });
 
 test("only 404 is treated as a package that is not on the registry", () => {
