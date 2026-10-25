@@ -51,6 +51,16 @@ test("handles OR-separated range bounds without spaces", () => {
   );
 });
 
+test("skips an empty bound before an OR-separated range", () => {
+  const installed = stripVersionRangeForTest("|| >= 1.2.3");
+  assert.equal(installed, "1.2.3");
+  assert.deepEqual(computeVersionDeltaForTest(installed, "2.0.0"), {
+    major: 1,
+    minor: 0,
+    patch: 0,
+  });
+});
+
 test("treats a non-string dependency specifier as unparseable", () => {
   assert.equal(stripVersionRangeForTest(null), "");
 });
