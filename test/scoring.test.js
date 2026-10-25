@@ -183,3 +183,42 @@ test("follows all standard HTTP redirects", async () => {
   }
 });
 
+test("resolves relative HTTP redirects against the current URL", async () => {
+  const originalGet = http.get;
+  const baseUrl = "http://redirect.test/redirect";
+  const expectedPayloadUrl = "http://redirect.test/payload";
+  const requestedUrls = [];
+  http.get = (url, options, callback) => {
+    requestedUrls.push(String(url));
+    const request = new EventEmitter();
+    queueMicrotask(() => {
+      const response = new EventEmitter();
+      response.resume = () => {};
+      if (String(url) === baseUrl) {
+        response.statusCode = 302;
+        response.headers = { location: "/payload" };
+      } else if (String(url) === expectedPayloadUrl) {
+        response.statusCode = 200;
+        response.headers = {};
+        queueMicrotask(() => {
+          response.emit("data", Buffer.from(JSON.stringify({ ok: true })));
+          response.emit("end");
+        });
+      } else {
+        response.statusCode = 400;
+        response.headers = {};
+      }
+      callback(response);
+    });
+    return request;
+  };
+
+  try {
+    const data = await fetchJsonWithRetryForTest(baseUrl);
+    assert.deepEqual(data, { ok: true });
+    assert.deepEqual(requestedUrls, [baseUrl, expectedPayloadUrl]);
+  } finally {
+    http.get = originalGet;
+  }
+});
+
