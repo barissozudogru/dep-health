@@ -436,8 +436,9 @@ async function fetchWeeklyDownloadsMap(
 function stripVersionRange(version: string): string {
   if (typeof version !== "string") return "";
   const trimmed = version.trim();
-  const operator = trimmed.match(/^(?:\^|~|>=|<=|>|<|=)\s*/)?.[0] ?? "";
-  return trimmed.slice(operator.length).trim().split(/\s+|\|\|/)[0];
+  const firstBound = trimmed.split("||").map((part) => part.trim()).find(Boolean) ?? "";
+  const operator = firstBound.match(/^(?:\^|~|>=|<=|>|<|=)\s*/)?.[0] ?? "";
+  return firstBound.slice(operator.length).trim().split(/\s+/)[0];
 }
 
 function isNotFound(message: string): boolean {
