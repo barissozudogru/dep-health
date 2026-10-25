@@ -47,7 +47,7 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
           reject(new Error(`REDIRECT_NO_LOCATION:${url}`));
           return;
         }
-        resolve(fetchJson<T>(location, redirectCount + 1));
+        resolve(fetchJson<T>(new URL(location, url).toString(), redirectCount + 1));
         return;
       }
       if (res.statusCode === 404) {
