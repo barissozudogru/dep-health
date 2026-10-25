@@ -22,6 +22,16 @@ function isRetryableStatus(status: number): boolean {
   return status === 429 || status >= 500;
 }
 
+function isRedirectStatus(status: number): boolean {
+  return (
+    status === 301 ||
+    status === 302 ||
+    status === 303 ||
+    status === 307 ||
+    status === 308
+  );
+}
+
 function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
   return new Promise((resolve, reject) => {
     if (redirectCount > 5) {
@@ -30,7 +40,7 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
     }
     const mod = url.startsWith("https://") ? https : http;
     const req = mod.get(url, { timeout: REQUEST_TIMEOUT_MS }, (res) => {
-      if (res.statusCode === 301 || res.statusCode === 302) {
+      if (isRedirectStatus(res.statusCode ?? 0)) {
         const location = res.headers.location;
         res.resume();
         if (!location) {
