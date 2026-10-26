@@ -60,3 +60,15 @@ test("does not analyze an identical direct and peer declaration twice", () => {
     [["shared", "^1.0.0", false]]
   );
 });
+
+test("does not analyze an identical production and development declaration twice", () => {
+  const pkg = {
+    dependencies: { shared: "^1.0.0" },
+    devDependencies: { shared: "^1.0.0" },
+  };
+
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest(pkg),
+    [["shared", "^1.0.0", false]]
+  );
+});

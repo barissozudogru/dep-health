@@ -591,7 +591,11 @@ function collectDeclaredDependencies(
   const seen = new Set<string>();
 
   function add(name: string, version: string, isDev: boolean): void {
-    const key = `${name}\u0000${version}\u0000${isDev}`;
+    // A package declared in both production and development dependencies is
+    // still one package to score. Keep the production declaration when both
+    // entries have the same version so the report does not duplicate it or
+    // label it as development-only.
+    const key = `${name}\u0000${version}`;
     if (seen.has(key)) return;
     seen.add(key);
     deps.push([name, version, isDev]);
