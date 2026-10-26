@@ -582,6 +582,30 @@ export interface AnalyzeOptions {
   onProgress?: (completed: number, total: number) => void;
 }
 
+function collectDeclaredDependencies(
+  pkg: PackageJson,
+  options: Pick<AnalyzeOptions, "prodOnly" | "devOnly"> = {}
+): Array<[string, string, boolean]> {
+  const { prodOnly = false, devOnly = false } = options;
+  const deps: Array<[string, string, boolean]> = [];
+
+  if (!devOnly) {
+    for (const [n, v] of Object.entries(pkg.dependencies ?? {})) {
+      deps.push([n, v, false]);
+    }
+    for (const [n, v] of Object.entries(pkg.peerDependencies ?? {})) {
+      deps.push([n, v, false]);
+    }
+  }
+  if (!prodOnly) {
+    for (const [n, v] of Object.entries(pkg.devDependencies ?? {})) {
+      deps.push([n, v, true]);
+    }
+  }
+
+  return deps;
+}
+
 export async function analyze(
   directory: string,
   options: AnalyzeOptions = {}
@@ -596,17 +620,7 @@ export async function analyze(
   const raw = fs.readFileSync(pkgPath, "utf8");
   const pkg: PackageJson = JSON.parse(raw);
 
-  const deps: Array<[string, string, boolean]> = [];
-  if (!devOnly) {
-    for (const [n, v] of Object.entries(pkg.dependencies ?? {})) {
-      deps.push([n, v, false]);
-    }
-  }
-  if (!prodOnly) {
-    for (const [n, v] of Object.entries(pkg.devDependencies ?? {})) {
-      deps.push([n, v, true]);
-    }
-  }
+  const deps = collectDeclaredDependencies(pkg, { prodOnly, devOnly });
 
   // One batched request for all download counts instead of one per dependency.
   // This is what keeps the whole run under the rate limit.
@@ -680,3 +694,4 @@ export const stripVersionRangeForTest = stripVersionRange;
 export const computeVersionDeltaForTest = computeVersionDelta;
 export const collectSkippedDependenciesForTest = collectSkippedDependencies;
 export const parsePublishedDateForTest = parsePublishedDate;
+export const collectDeclaredDependenciesForTest = collectDeclaredDependencies;
