@@ -588,18 +588,26 @@ function collectDeclaredDependencies(
 ): Array<[string, string, boolean]> {
   const { prodOnly = false, devOnly = false } = options;
   const deps: Array<[string, string, boolean]> = [];
+  const seen = new Set<string>();
+
+  function add(name: string, version: string, isDev: boolean): void {
+    const key = `${name}\u0000${version}\u0000${isDev}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    deps.push([name, version, isDev]);
+  }
 
   if (!devOnly) {
     for (const [n, v] of Object.entries(pkg.dependencies ?? {})) {
-      deps.push([n, v, false]);
+      add(n, v, false);
     }
     for (const [n, v] of Object.entries(pkg.peerDependencies ?? {})) {
-      deps.push([n, v, false]);
+      add(n, v, false);
     }
   }
   if (!prodOnly) {
     for (const [n, v] of Object.entries(pkg.devDependencies ?? {})) {
-      deps.push([n, v, true]);
+      add(n, v, true);
     }
   }
 
