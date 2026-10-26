@@ -48,3 +48,15 @@ test("does not include peer dependencies in development-only mode", () => {
     [["tooling", "^2.0.0", true]]
   );
 });
+
+test("does not analyze an identical direct and peer declaration twice", () => {
+  const pkg = {
+    dependencies: { shared: "^1.0.0" },
+    peerDependencies: { shared: "^1.0.0" },
+  };
+
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest(pkg),
+    [["shared", "^1.0.0", false]]
+  );
+});
