@@ -611,7 +611,14 @@ function collectDeclaredDependencies(
   }
 
   if (!devOnly) {
+    const optionalNames = new Set(Object.keys(pkg.optionalDependencies ?? {}));
     for (const [n, v] of Object.entries(pkg.dependencies ?? {})) {
+      // npm gives optionalDependencies precedence when the same package is
+      // listed in both sections, so do not score the overridden declaration.
+      if (optionalNames.has(n)) continue;
+      add(n, v, false);
+    }
+    for (const [n, v] of Object.entries(pkg.optionalDependencies ?? {})) {
       add(n, v, false);
     }
     for (const [n, v] of Object.entries(pkg.peerDependencies ?? {})) {

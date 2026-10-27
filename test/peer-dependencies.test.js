@@ -22,18 +22,33 @@ const collectDeclaredDependenciesForTest =
 test("includes peer dependencies in default and production-only modes", () => {
   const pkg = {
     dependencies: { runtime: "^1.0.0" },
+    optionalDependencies: { optional: "^1.5.0" },
     devDependencies: { tooling: "^2.0.0" },
     peerDependencies: { framework: ">=3.0.0" },
   };
 
   assert.deepEqual(collectDeclaredDependenciesForTest(pkg), [
     ["runtime", "^1.0.0", false],
+    ["optional", "^1.5.0", false],
     ["framework", ">=3.0.0", false],
     ["tooling", "^2.0.0", true],
   ]);
   assert.deepEqual(collectDeclaredDependenciesForTest(pkg, { prodOnly: true }), [
     ["runtime", "^1.0.0", false],
+    ["optional", "^1.5.0", false],
     ["framework", ">=3.0.0", false],
+  ]);
+});
+
+test("optionalDependencies override a normal dependency with the same name", () => {
+  const pkg = {
+    dependencies: { shared: "^1.0.0" },
+    optionalDependencies: { shared: "^2.0.0", optional: "^3.0.0" },
+  };
+
+  assert.deepEqual(collectDeclaredDependenciesForTest(pkg), [
+    ["shared", "^2.0.0", false],
+    ["optional", "^3.0.0", false],
   ]);
 });
 
