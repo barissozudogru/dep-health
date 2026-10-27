@@ -251,7 +251,7 @@ function scoreFreshness(delta: VersionDelta): number {
 
 function scoreRecency(lastPublished: Date | null): number {
   // 30% weight - raw score 0-10
-  if (!lastPublished) return 1;
+  if (!lastPublished || lastPublished.getTime() > Date.now()) return 1;
   const ageMs = Date.now() - lastPublished.getTime();
   const months = ageMs / (1000 * 60 * 60 * 24 * 30);
   if (months < 6) return 10;
@@ -715,4 +715,5 @@ export const stripVersionRangeForTest = stripVersionRange;
 export const computeVersionDeltaForTest = computeVersionDelta;
 export const collectSkippedDependenciesForTest = collectSkippedDependencies;
 export const parsePublishedDateForTest = parsePublishedDate;
+export const scoreRecencyForTest = scoreRecency;
 export const collectDeclaredDependenciesForTest = collectDeclaredDependencies;

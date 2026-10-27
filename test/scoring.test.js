@@ -17,6 +17,17 @@ const {
 const parsePublishedDateForTest =
   depHealth.parsePublishedDateForTest ??
   ((value) => (value ? new Date(value) : null));
+const scoreRecencyForTest =
+  depHealth.scoreRecencyForTest ??
+  ((lastPublished) => {
+    if (!lastPublished) return 1;
+    const months =
+      (Date.now() - lastPublished.getTime()) / (1000 * 60 * 60 * 24 * 30);
+    if (months < 6) return 10;
+    if (months < 12) return 7;
+    if (months < 24) return 4;
+    return 1;
+  });
 
 /**
  * The npm downloads API rate-limits after a handful of rapid requests. A failed
@@ -91,6 +102,12 @@ test("an invalid publish timestamp becomes unknown instead of poisoning the scor
     parsePublishedDateForTest("2026-09-11T00:00:00.000Z")?.toISOString(),
     "2026-09-11T00:00:00.000Z"
   );
+});
+
+test("a future publish timestamp does not receive the freshest recency score", () => {
+  const future = parsePublishedDateForTest("2099-01-01T00:00:00.000Z");
+  assert.ok(future);
+  assert.equal(scoreRecencyForTest(future), 1);
 });
 
 test("only 404 is treated as a package that is not on the registry", () => {
