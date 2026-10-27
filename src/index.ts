@@ -263,6 +263,7 @@ function scoreRecency(lastPublished: Date | null): number {
 function parsePublishedDate(value: unknown): Date | null {
   if (typeof value !== "string") return null;
   const calendarDate = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[Tt ]|$)/);
+  if (!calendarDate) return null;
   if (calendarDate) {
     const year = Number(calendarDate[1]);
     const month = Number(calendarDate[2]);
