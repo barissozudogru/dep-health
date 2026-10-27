@@ -81,6 +81,9 @@ test("popularity tiers are unchanged for known counts", () => {
 
 test("an invalid publish timestamp becomes unknown instead of poisoning the score", () => {
   assert.equal(parsePublishedDateForTest("not-a-date"), null);
+  assert.equal(parsePublishedDateForTest("2026-02-30T00:00:00.000Z"), null);
+  assert.equal(parsePublishedDateForTest("2026-02-30 00:00:00Z"), null);
+  assert.equal(parsePublishedDateForTest("2026-02-30t00:00:00.000Z"), null);
   assert.equal(parsePublishedDateForTest(123), null);
   assert.equal(
     parsePublishedDateForTest("2026-09-11T00:00:00.000Z")?.toISOString(),
