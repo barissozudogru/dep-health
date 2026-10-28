@@ -65,6 +65,13 @@ test("a malformed scoped download count stays unknown", () => {
   assert.equal(parseDownloadsBatchForTest({ downloads: 394117801 }, ["@scope/pkg"]).get("@scope/pkg"), 394117801);
 });
 
+test("a non-object download response stays unknown", () => {
+  assert.deepEqual(
+    [...parseDownloadsBatchForTest(null, ["pkg"]).entries()],
+    [["pkg", null]]
+  );
+});
+
 test("a bare response cannot assign one package count to a multi-name batch", () => {
   const single = {
     downloads: 394117801,

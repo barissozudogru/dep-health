@@ -377,7 +377,11 @@ function isSinglePackageResponse(
 ): data is DownloadsResponse {
   // In the keyed bulk shape a "downloads" key would hold a package entry,
   // never a number, so a numeric downloads field identifies the bare object.
-  return typeof data.downloads === "number";
+  return (
+    data !== null &&
+    typeof data === "object" &&
+    typeof data.downloads === "number"
+  );
 }
 
 function parseDownloadCount(value: unknown): number | null {
@@ -405,7 +409,9 @@ function parseDownloadsBatch(
   const keyed: Record<string, DownloadsResponse | null> =
     batch.length === 1 && isSinglePackageResponse(data)
       ? { [batch[0]]: data }
-      : (data as Record<string, DownloadsResponse | null>);
+      : data !== null && typeof data === "object"
+        ? (data as Record<string, DownloadsResponse | null>)
+        : {};
   const counts = new Map<string, number | null>();
   for (const name of batch) {
     const entry = keyed[name];
