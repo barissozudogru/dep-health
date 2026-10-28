@@ -87,3 +87,16 @@ test("does not analyze an identical production and development declaration twice
     [["shared", "^1.0.0", false]]
   );
 });
+
+test("does not analyze different declarations of the same package twice", () => {
+  const pkg = {
+    dependencies: { shared: "^1.0.0" },
+    peerDependencies: { shared: ">=2.0.0" },
+    devDependencies: { shared: "^3.0.0" },
+  };
+
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest(pkg),
+    [["shared", "^1.0.0", false]]
+  );
+});
