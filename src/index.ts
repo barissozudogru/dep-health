@@ -380,6 +380,12 @@ function isSinglePackageResponse(
   return typeof data.downloads === "number";
 }
 
+function parseDownloadCount(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : null;
+}
+
 /**
  * Reads one bulk downloads response into per-name counts.
  *
@@ -403,7 +409,7 @@ function parseDownloadsBatch(
   const counts = new Map<string, number | null>();
   for (const name of batch) {
     const entry = keyed[name];
-    counts.set(name, entry ? entry.downloads ?? null : null);
+    counts.set(name, parseDownloadCount(entry?.downloads));
   }
   return counts;
 }
@@ -436,7 +442,7 @@ async function fetchWeeklyDownloadsMap(
       const data = await fetchJsonWithRetry<DownloadsResponse>(
         `${DOWNLOADS_BASE}/${name}`
       );
-      result.set(name, data.downloads ?? null);
+      result.set(name, parseDownloadsBatch(data, [name]).get(name) ?? null);
     } catch {
       result.set(name, null);
     }
