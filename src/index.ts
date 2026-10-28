@@ -61,7 +61,10 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
         reject(
           Object.assign(new Error(`HTTP_${res.statusCode}:${url}`), {
             retryable: true,
-            retryAfterMs: Number.isFinite(retryAfter) ? retryAfter * 1000 : null,
+            retryAfterMs:
+              Number.isFinite(retryAfter) && retryAfter >= 0
+                ? retryAfter * 1000
+                : null,
           })
         );
         return;

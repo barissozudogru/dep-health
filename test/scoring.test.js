@@ -129,6 +129,41 @@ test("a 5xx is retryable so a transient blip does not abort the run", () => {
   assert.equal(isRetryableStatusForTest(200), false);
 });
 
+test("a negative Retry-After header uses exponential backoff", async () => {
+  const originalGet = http.get;
+  let calls = 0;
+  http.get = (url, options, callback) => {
+    const request = new EventEmitter();
+    queueMicrotask(() => {
+      const response = new EventEmitter();
+      response.resume = () => {};
+      if (calls++ === 0) {
+        response.statusCode = 429;
+        response.headers = { "retry-after": "-1" };
+      } else {
+        response.statusCode = 200;
+        response.headers = {};
+        queueMicrotask(() => {
+          response.emit("data", Buffer.from(JSON.stringify({ ok: true })));
+          response.emit("end");
+        });
+      }
+      callback(response);
+    });
+    return request;
+  };
+
+  try {
+    const start = Date.now();
+    const data = await fetchJsonWithRetryForTest("http://retry.test/test");
+    assert.deepEqual(data, { ok: true });
+    assert.equal(calls, 2);
+    assert.ok(Date.now() - start >= 350, "must use the first exponential backoff");
+  } finally {
+    http.get = originalGet;
+  }
+});
+
 test("fetchJsonWithRetry retries on 429 and succeeds on the next attempt", async () => {
   let calls = 0;
   const server = http.createServer((req, res) => {
