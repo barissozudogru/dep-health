@@ -51,6 +51,20 @@ test("a null entry in a keyed response stays unknown rather than zero", () => {
   assert.equal(counts.get("does-not-exist"), null);
 });
 
+test("a non-numeric keyed download count stays unknown", () => {
+  const keyed = { ms: { downloads: "394117801" } };
+  const counts = parseDownloadsBatchForTest(keyed, ["ms"]);
+  assert.equal(counts.get("ms"), null);
+});
+
+test("a malformed scoped download count stays unknown", () => {
+  const scoped = { downloads: "394117801" };
+  assert.equal(parseDownloadsBatchForTest(scoped, ["@scope/pkg"]).get("@scope/pkg"), null);
+  assert.equal(parseDownloadsBatchForTest({ downloads: -1 }, ["@scope/pkg"]).get("@scope/pkg"), null);
+  assert.equal(parseDownloadsBatchForTest({ downloads: Infinity }, ["@scope/pkg"]).get("@scope/pkg"), null);
+  assert.equal(parseDownloadsBatchForTest({ downloads: 394117801 }, ["@scope/pkg"]).get("@scope/pkg"), 394117801);
+});
+
 test("a bare response cannot assign one package count to a multi-name batch", () => {
   const single = {
     downloads: 394117801,
