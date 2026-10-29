@@ -271,7 +271,8 @@ function parsePublishedDate(value: unknown): Date | null {
     const year = Number(calendarDate[1]);
     const month = Number(calendarDate[2]);
     const day = Number(calendarDate[3]);
-    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
     if (month < 1 || month > 12 || day < 1 || day > daysInMonth) return null;
   }
   const date = new Date(value);

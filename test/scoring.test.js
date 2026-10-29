@@ -104,6 +104,13 @@ test("an invalid publish timestamp becomes unknown instead of poisoning the scor
   );
 });
 
+test("accepts the ISO year-zero leap day", () => {
+  assert.equal(
+    parsePublishedDateForTest("0000-02-29T00:00:00.000Z")?.toISOString(),
+    "0000-02-29T00:00:00.000Z"
+  );
+});
+
 test("a future publish timestamp does not receive the freshest recency score", () => {
   const future = parsePublishedDateForTest("2099-01-01T00:00:00.000Z");
   assert.ok(future);
