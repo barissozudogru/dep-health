@@ -392,7 +392,7 @@ function isSinglePackageResponse(
 }
 
 function parseDownloadCount(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) && value >= 0
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
     ? value
     : null;
 }
