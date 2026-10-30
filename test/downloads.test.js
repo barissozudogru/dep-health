@@ -63,6 +63,12 @@ test("a fractional download count stays unknown", () => {
   assert.equal(counts.get("ms"), null);
 });
 
+test("an unsafe integer download count stays unknown", () => {
+  const keyed = { ms: { downloads: Number.MAX_SAFE_INTEGER + 1 } };
+  const counts = parseDownloadsBatchForTest(keyed, ["ms"]);
+  assert.equal(counts.get("ms"), null);
+});
+
 test("a malformed scoped download count stays unknown", () => {
   const scoped = { downloads: "394117801" };
   assert.equal(parseDownloadsBatchForTest(scoped, ["@scope/pkg"]).get("@scope/pkg"), null);
