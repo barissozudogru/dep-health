@@ -148,7 +148,13 @@ function computeVersionDelta(
   const [lMaj, lMin, lPat] = lv;
 
   if (lMaj > iMaj) return { major: lMaj - iMaj, minor: 0, patch: 0 };
-  if (lMaj === iMaj && lMin > iMin) return { major: 0, minor: lMin - iMin, patch: 0 };
+  if (lMaj === iMaj && lMin > iMin) {
+    return {
+      major: 0,
+      minor: lMin - iMin,
+      patch: Math.max(0, lPat - iPat),
+    };
+  }
   if (lMaj === iMaj && lMin === iMin && lPat > iPat) return { major: 0, minor: 0, patch: lPat - iPat };
   if (
     lMaj === iMaj &&
