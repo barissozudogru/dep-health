@@ -57,6 +57,12 @@ test("a non-numeric keyed download count stays unknown", () => {
   assert.equal(counts.get("ms"), null);
 });
 
+test("a fractional download count stays unknown", () => {
+  const keyed = { ms: { downloads: 100.5 } };
+  const counts = parseDownloadsBatchForTest(keyed, ["ms"]);
+  assert.equal(counts.get("ms"), null);
+});
+
 test("a malformed scoped download count stays unknown", () => {
   const scoped = { downloads: "394117801" };
   assert.equal(parseDownloadsBatchForTest(scoped, ["@scope/pkg"]).get("@scope/pkg"), null);
