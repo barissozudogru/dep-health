@@ -107,6 +107,36 @@ test("a release outranks a prerelease of the same version", () => {
   assert.equal(resolveLatestVersionForTest(registry), "2.0.0");
 });
 
+test("build metadata does not make an otherwise equal release newer", () => {
+  for (const versions of [
+    { "2.0.0": {}, "2.0.0+build.1": {} },
+    { "2.0.0+build.1": {}, "2.0.0": {} },
+  ]) {
+    const registry = {
+      name: "example",
+      "dist-tags": {},
+      time: {},
+      versions,
+    };
+    assert.equal(resolveLatestVersionForTest(registry), "2.0.0");
+  }
+});
+
+test("equal build-metadata versions use a deterministic fallback tie-breaker", () => {
+  for (const versions of [
+    { "2.0.0+build.2": {}, "2.0.0+build.1": {} },
+    { "2.0.0+build.1": {}, "2.0.0+build.2": {} },
+  ]) {
+    const registry = {
+      name: "example",
+      "dist-tags": {},
+      time: {},
+      versions,
+    };
+    assert.equal(resolveLatestVersionForTest(registry), "2.0.0+build.1");
+  }
+});
+
 test("the highest prerelease wins regardless of identifier shape or insertion order", () => {
   const cases = [
     ["2.0.0-rc.2", "2.0.0-rc.10", "2.0.0-rc.10"],
