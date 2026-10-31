@@ -193,7 +193,12 @@ function comparePublishedVersions(a: string, b: string): number {
 
   const aPre = aMatch[4]?.split(".") ?? [];
   const bPre = bMatch[4]?.split(".") ?? [];
-  if (aPre.length === 0 || bPre.length === 0) return aPre.length === 0 ? 1 : -1;
+  if (aPre.length === 0 || bPre.length === 0) {
+    // Build metadata is excluded from semver precedence. Two stable versions
+    // with different build metadata therefore compare equal.
+    if (aPre.length === 0 && bPre.length === 0) return 0;
+    return aPre.length === 0 ? 1 : -1;
+  }
   for (let i = 0; i < Math.min(aPre.length, bPre.length); i++) {
     const aIdentifier = aPre[i];
     const bIdentifier = bPre[i];
@@ -217,6 +222,15 @@ function comparePublishedVersions(a: string, b: string): number {
 function isCompleteVersion(version: string): boolean {
   const cleaned = version.replace(/^v(?=\d)/i, "");
   return /^\d+\.\d+\.\d+(?:[+-]|$)/.test(cleaned) && parseVersion(version) !== null;
+}
+
+function compareFallbackTieBreakers(a: string, b: string): number {
+  const aHasBuildMetadata = a.includes("+");
+  const bHasBuildMetadata = b.includes("+");
+  if (aHasBuildMetadata !== bHasBuildMetadata) {
+    return aHasBuildMetadata ? -1 : 1;
+  }
+  return a < b ? 1 : a > b ? -1 : 0;
 }
 
 /**
@@ -245,7 +259,10 @@ function resolveLatestVersion(registry: RegistryPackage): string | null {
   for (const version of Object.keys(registry.versions ?? {})) {
     if (!isCompleteVersion(version)) continue;
     const cmp = latest ? comparePublishedVersions(version, latest) : 1;
-    if (cmp > 0) {
+    if (
+      cmp > 0 ||
+      (cmp === 0 && latest !== null && compareFallbackTieBreakers(version, latest) > 0)
+    ) {
       latest = version;
     }
   }
