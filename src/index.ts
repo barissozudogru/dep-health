@@ -273,6 +273,8 @@ function parsePublishedDate(value: unknown): Date | null {
   if (typeof value !== "string") return null;
   const calendarDate = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[Tt ]|$)/);
   if (!calendarDate) return null;
+  const hasTime = calendarDate[0].length > 10;
+  if (hasTime && !/(?:Z|[+-]\d{2}:\d{2})$/i.test(value)) return null;
   if (calendarDate) {
     const year = Number(calendarDate[1]);
     const month = Number(calendarDate[2]);

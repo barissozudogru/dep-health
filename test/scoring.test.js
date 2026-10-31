@@ -97,6 +97,7 @@ test("an invalid publish timestamp becomes unknown instead of poisoning the scor
   assert.equal(parsePublishedDateForTest("2026-02-30t00:00:00.000Z"), null);
   assert.equal(parsePublishedDateForTest("2026-02-30Z"), null);
   assert.equal(parsePublishedDateForTest("2026/02/30"), null);
+  assert.equal(parsePublishedDateForTest("2026-09-11T00:00:00"), null);
   assert.equal(parsePublishedDateForTest(123), null);
   assert.equal(
     parsePublishedDateForTest("2026-09-11T00:00:00.000Z")?.toISOString(),
