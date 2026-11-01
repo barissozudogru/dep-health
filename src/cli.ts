@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import path from "node:path";
 import process from "node:process";
-import { analyze } from "./index.js";
+import { analyze, formatAgeForTest } from "./index.js";
 import { DependencyHealth, AnalysisResult, HealthCategory } from "./types.js";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
@@ -195,14 +195,7 @@ function scoreBar(score: number): string {
 }
 
 function formatAge(date: Date | null): string {
-  if (!date) return "unknown";
-  const ms = Date.now() - date.getTime();
-  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-  if (days < 30) return `${days}d ago`;
-  const months = Math.floor(days / 30);
-  if (months < 24) return `${months}mo ago`;
-  const years = Math.floor(days / 365);
-  return `${years}y ago`;
+  return formatAgeForTest(date);
 }
 
 function formatDownloads(n: number | null): string {

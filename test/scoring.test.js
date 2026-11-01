@@ -29,6 +29,10 @@ const scoreRecencyForTest =
     return 1;
   });
 
+const formatAgeForTest =
+  depHealth.formatAgeForTest ??
+  (() => "");
+
 /**
  * The npm downloads API rate-limits after a handful of rapid requests. A failed
  * lookup used to be scored as zero popularity, so the same project produced
@@ -116,6 +120,11 @@ test("a future publish timestamp does not receive the freshest recency score", (
   const future = parsePublishedDateForTest("2099-01-01T00:00:00.000Z");
   assert.ok(future);
   assert.equal(scoreRecencyForTest(future), 1);
+});
+
+test("a future publish timestamp is not displayed as a negative age", () => {
+  const future = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  assert.equal(formatAgeForTest(future), "in the future");
 });
 
 test("only 404 is treated as a package that is not on the registry", () => {

@@ -286,6 +286,18 @@ function scoreRecency(lastPublished: Date | null): number {
   return 1;
 }
 
+export function formatAgeForTest(date: Date | null): string {
+  if (!date) return "unknown";
+  const ms = Date.now() - date.getTime();
+  if (ms < 0) return "in the future";
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 24) return `${months}mo ago`;
+  const years = Math.floor(days / 365);
+  return `${years}y ago`;
+}
+
 function parsePublishedDate(value: unknown): Date | null {
   if (typeof value !== "string") return null;
   const calendarDate = value.match(/^(\d{4})-(\d{2})-(\d{2})(?:[Tt ]|$)/);
