@@ -287,7 +287,7 @@ function scoreRecency(lastPublished: Date | null): number {
 }
 
 export function formatAgeForTest(date: Date | null): string {
-  if (!date) return "unknown";
+  if (!date || Number.isNaN(date.getTime())) return "unknown";
   const ms = Date.now() - date.getTime();
   if (ms < 0) return "in the future";
   const days = Math.floor(ms / (1000 * 60 * 60 * 24));

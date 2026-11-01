@@ -127,6 +127,10 @@ test("a future publish timestamp is not displayed as a negative age", () => {
   assert.equal(formatAgeForTest(future), "in the future");
 });
 
+test("an invalid publish date is displayed as unknown", () => {
+  assert.equal(formatAgeForTest(new Date(Number.NaN)), "unknown");
+});
+
 test("only 404 is treated as a package that is not on the registry", () => {
   // A 404 means a local path, git dependency or private package, which is
   // expected and skipped. Any other failure means the analysis would silently
