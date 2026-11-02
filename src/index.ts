@@ -19,7 +19,7 @@ const CONCURRENCY = 8;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function isRetryableStatus(status: number): boolean {
-  return status === 429 || status >= 500;
+  return status === 429 || (status >= 500 && status < 600);
 }
 
 function isRedirectStatus(status: number): boolean {
