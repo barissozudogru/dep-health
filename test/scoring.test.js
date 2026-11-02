@@ -146,6 +146,7 @@ test("a 5xx is retryable so a transient blip does not abort the run", () => {
   assert.equal(isRetryableStatusForTest(503), true);
   assert.equal(isRetryableStatusForTest(500), true);
   assert.equal(isRetryableStatusForTest(429), true);
+  assert.equal(isRetryableStatusForTest(600), false);
   assert.equal(isRetryableStatusForTest(404), false);
   assert.equal(isRetryableStatusForTest(200), false);
 });
