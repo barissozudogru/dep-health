@@ -661,23 +661,33 @@ function collectDeclaredDependencies(
     deps.push([name, version, isDev]);
   }
 
+  function entries(value: unknown): Array<[string, string]> {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+      return [];
+    }
+    return Object.entries(value).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string"
+    );
+  }
+
   if (!devOnly) {
-    const optionalNames = new Set(Object.keys(pkg.optionalDependencies ?? {}));
-    for (const [n, v] of Object.entries(pkg.dependencies ?? {})) {
+    const optionalEntries = entries(pkg.optionalDependencies);
+    const optionalNames = new Set(optionalEntries.map(([name]) => name));
+    for (const [n, v] of entries(pkg.dependencies)) {
       // npm gives optionalDependencies precedence when the same package is
       // listed in both sections, so do not score the overridden declaration.
       if (optionalNames.has(n)) continue;
       add(n, v, false);
     }
-    for (const [n, v] of Object.entries(pkg.optionalDependencies ?? {})) {
+    for (const [n, v] of optionalEntries) {
       add(n, v, false);
     }
-    for (const [n, v] of Object.entries(pkg.peerDependencies ?? {})) {
+    for (const [n, v] of entries(pkg.peerDependencies)) {
       add(n, v, false);
     }
   }
   if (!prodOnly) {
-    for (const [n, v] of Object.entries(pkg.devDependencies ?? {})) {
+    for (const [n, v] of entries(pkg.devDependencies)) {
       add(n, v, true);
     }
   }

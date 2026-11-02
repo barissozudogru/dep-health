@@ -100,3 +100,14 @@ test("does not analyze different declarations of the same package twice", () => 
     [["shared", "^1.0.0", false]]
   );
 });
+
+test("does not turn malformed dependency sections into indexed packages", () => {
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest({
+      dependencies: "oops",
+      devDependencies: ["^1.0.0"],
+      peerDependencies: { valid: "^2.0.0", invalid: 3 },
+    }),
+    [["valid", "^2.0.0", false]]
+  );
+});
