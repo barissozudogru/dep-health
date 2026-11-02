@@ -708,6 +708,9 @@ export async function analyze(
 
   const raw = fs.readFileSync(pkgPath, "utf8");
   const pkg: PackageJson = JSON.parse(raw);
+  if (pkg === null || typeof pkg !== "object" || Array.isArray(pkg)) {
+    throw new Error(`package.json at ${pkgPath} must contain a JSON object`);
+  }
 
   const deps = collectDeclaredDependencies(pkg, { prodOnly, devOnly });
 
