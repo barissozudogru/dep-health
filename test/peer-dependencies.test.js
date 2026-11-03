@@ -125,3 +125,10 @@ test("does not collect a whitespace-only dependency name", () => {
     []
   );
 });
+
+test("does not collect dependency names with surrounding whitespace", () => {
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest({ dependencies: { " shared ": "^1.0.0" } }),
+    []
+  );
+});
