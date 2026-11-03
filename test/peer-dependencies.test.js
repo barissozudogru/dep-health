@@ -118,3 +118,10 @@ test("does not collect an empty dependency name", () => {
     []
   );
 });
+
+test("does not collect a whitespace-only dependency name", () => {
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest({ dependencies: { "   ": "^1.0.0" } }),
+    []
+  );
+});
