@@ -132,3 +132,10 @@ test("does not collect dependency names with surrounding whitespace", () => {
     []
   );
 });
+
+test("does not collect dependency names with internal whitespace", () => {
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest({ dependencies: { "not a-package": "^1.0.0" } }),
+    []
+  );
+});
