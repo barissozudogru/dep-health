@@ -445,7 +445,9 @@ function parseDownloadsBatch(
   batch: string[]
 ): Map<string, number | null> {
   const keyed: Record<string, DownloadsResponse | null> =
-    batch.length === 1 && isSinglePackageResponse(data)
+    batch.length === 1 &&
+    isSinglePackageResponse(data) &&
+    (typeof data.package !== "string" || data.package === batch[0])
       ? { [batch[0]]: data }
       : data !== null && typeof data === "object"
         ? (data as Record<string, DownloadsResponse | null>)
