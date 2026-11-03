@@ -669,7 +669,10 @@ function collectDeclaredDependencies(
     }
     return Object.entries(value).filter(
       (entry): entry is [string, string] =>
-        entry[0] === entry[0].trim() && entry[0].length > 0 && typeof entry[1] === "string"
+        entry[0] === entry[0].trim() &&
+        entry[0].length > 0 &&
+        !/\s/.test(entry[0]) &&
+        typeof entry[1] === "string"
     );
   }
 
