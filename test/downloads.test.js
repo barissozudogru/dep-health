@@ -95,3 +95,16 @@ test("a bare response cannot assign one package count to a multi-name batch", ()
   assert.equal(counts.get("ms"), null);
   assert.equal(counts.get("typescript"), null);
 });
+
+test("a bare response for a different package stays unknown", () => {
+  const response = {
+    downloads: 394117801,
+    start: "2026-09-05",
+    end: "2026-09-11",
+    package: "other-package",
+  };
+  assert.equal(
+    parseDownloadsBatchForTest(response, ["ms"]).get("ms"),
+    null
+  );
+});
