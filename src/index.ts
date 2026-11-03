@@ -668,7 +668,8 @@ function collectDeclaredDependencies(
       return [];
     }
     return Object.entries(value).filter(
-      (entry): entry is [string, string] => typeof entry[1] === "string"
+      (entry): entry is [string, string] =>
+        entry[0].length > 0 && typeof entry[1] === "string"
     );
   }
 

@@ -111,3 +111,10 @@ test("does not turn malformed dependency sections into indexed packages", () => 
     [["valid", "^2.0.0", false]]
   );
 });
+
+test("does not collect an empty dependency name", () => {
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest({ dependencies: { "": "^1.0.0" } }),
+    []
+  );
+});
