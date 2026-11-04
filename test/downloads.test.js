@@ -121,3 +121,11 @@ test("a bare response with a malformed package name stays unknown", () => {
     null
   );
 });
+
+test("a bare response without a package name stays unknown", () => {
+  const response = { downloads: 394117801 };
+  assert.equal(
+    parseDownloadsBatchForTest(response, ["ms"]).get("ms"),
+    null
+  );
+});

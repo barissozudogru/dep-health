@@ -447,7 +447,8 @@ function parseDownloadsBatch(
   const keyed: Record<string, DownloadsResponse | null> =
     batch.length === 1 &&
     isSinglePackageResponse(data) &&
-    (data.package === undefined || data.package === batch[0])
+    (data.package === batch[0] ||
+      (data.package === undefined && batch[0].startsWith("@")))
       ? { [batch[0]]: data }
       : data !== null && typeof data === "object"
         ? (data as Record<string, DownloadsResponse | null>)
