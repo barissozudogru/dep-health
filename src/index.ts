@@ -723,12 +723,21 @@ export async function analyze(
 
   // One batched request for all download counts instead of one per dependency.
   // This is what keeps the whole run under the rate limit.
-  const downloads = await fetchWeeklyDownloadsMap(deps.map(([name]) => name));
+  // Non-semver specifiers are skipped below, so do not query external services
+  // for dependencies that cannot be scored in the first place.
+  const scorableNames = deps
+    .filter(([, version]) => parseVersion(stripVersionRange(version)) !== null)
+    .map(([name]) => name);
+  const downloads = await fetchWeeklyDownloadsMap(scorableNames);
 
   const tasks = deps.map(
     ([name, version, isDev]) =>
-      () =>
-        analyzePackage(name, version, isDev, downloads.get(name) ?? null)
+      () => {
+        if (parseVersion(stripVersionRange(version)) === null) {
+          return Promise.resolve(null);
+        }
+        return analyzePackage(name, version, isDev, downloads.get(name) ?? null);
+      }
   );
 
   const rawResults = await runConcurrent(tasks, CONCURRENCY, onProgress);
