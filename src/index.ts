@@ -708,6 +708,10 @@ export async function analyze(
 ): Promise<AnalysisResult> {
   const { prodOnly = false, devOnly = false, onProgress } = options;
 
+  if (prodOnly && devOnly) {
+    throw new Error("prodOnly and devOnly cannot be used together");
+  }
+
   const pkgPath = path.join(directory, "package.json");
   if (!fs.existsSync(pkgPath)) {
     throw new Error(`No package.json found at ${pkgPath}`);
