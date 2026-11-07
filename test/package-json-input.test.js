@@ -23,6 +23,15 @@ test("rejects a non-object package.json with a useful validation error", async (
   }
 });
 
+test("rejects conflicting dependency filters instead of analyzing nothing", async () => {
+  await assert.rejects(
+    analyze(process.cwd(), { prodOnly: true, devOnly: true }),
+    (error) =>
+      error instanceof Error &&
+      error.message === "prodOnly and devOnly cannot be used together"
+  );
+});
+
 test("skips non-semver dependency specifiers without network access", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-health-package-json-"));
   const originalGet = https.get;
