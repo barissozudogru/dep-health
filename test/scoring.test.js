@@ -122,6 +122,26 @@ test("a future publish timestamp does not receive the freshest recency score", (
   assert.equal(scoreRecencyForTest(future), 1);
 });
 
+test("recency uses exact calendar-month cutoffs at the end of a month", () => {
+  const now = new Date(2025, 7, 31, 12, 0, 0, 0);
+  const cutoff = (months) => {
+    const date = new Date(now);
+    date.setDate(1);
+    date.setMonth(date.getMonth() - months);
+    date.setDate(Math.min(now.getDate(), new Date(
+      date.getFullYear(), date.getMonth() + 1, 0
+    ).getDate()));
+    return date;
+  };
+
+  assert.equal(scoreRecencyForTest(cutoff(6), now), 7);
+  assert.equal(scoreRecencyForTest(new Date(cutoff(6).getTime() + 1), now), 10);
+  assert.equal(scoreRecencyForTest(cutoff(12), now), 4);
+  assert.equal(scoreRecencyForTest(new Date(cutoff(12).getTime() + 1), now), 7);
+  assert.equal(scoreRecencyForTest(cutoff(24), now), 1);
+  assert.equal(scoreRecencyForTest(new Date(cutoff(24).getTime() + 1), now), 4);
+});
+
 test("a future publish timestamp is not displayed as a negative age", () => {
   const future = new Date(Date.now() + 24 * 60 * 60 * 1000);
   assert.equal(formatAgeForTest(future), "in the future");

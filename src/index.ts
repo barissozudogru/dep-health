@@ -275,14 +275,29 @@ function scoreFreshness(delta: VersionDelta): number {
   return Math.max(0, Math.min(10, raw));
 }
 
-function scoreRecency(lastPublished: Date | null): number {
+function scoreRecency(lastPublished: Date | null, now = new Date()): number {
   // 30% weight - raw score 0-10
-  if (!lastPublished || lastPublished.getTime() > Date.now()) return 1;
-  const ageMs = Date.now() - lastPublished.getTime();
-  const months = ageMs / (1000 * 60 * 60 * 24 * 30);
-  if (months < 6) return 10;
-  if (months < 12) return 7;
-  if (months < 24) return 4;
+  if (!lastPublished || lastPublished.getTime() > now.getTime()) return 1;
+
+  function monthsBefore(months: number): Date {
+    const threshold = new Date(now);
+    const originalDay = threshold.getDate();
+    threshold.setDate(1);
+    threshold.setMonth(threshold.getMonth() - months);
+    const lastDay = new Date(
+      threshold.getFullYear(),
+      threshold.getMonth() + 1,
+      0
+    ).getDate();
+    threshold.setDate(Math.min(originalDay, lastDay));
+    return threshold;
+  }
+
+  // The documented cutoffs are calendar months. Fixed 30-day periods misclassify
+  // recent releases whenever the months between the dates contain 31 days.
+  if (lastPublished > monthsBefore(6)) return 10;
+  if (lastPublished > monthsBefore(12)) return 7;
+  if (lastPublished > monthsBefore(24)) return 4;
   return 1;
 }
 
