@@ -46,6 +46,16 @@ test("a missing path value is rejected instead of treating the next flag as a di
   assert.doesNotMatch(result.stdout, /Analyzing dependencies/);
 });
 
+test("a directory argument may match a short option name", () => {
+  for (const directory of ["-h", "-v", "-p"]) {
+    const result = runCli(["--path", directory, "--json"]);
+    assert.equal(result.status, 1, `${directory}: ${result.stdout}`);
+    assert.match(result.stderr, /No package\.json found at/);
+    assert.match(result.stderr, new RegExp(`${directory}/package\\.json`));
+    assert.doesNotMatch(result.stderr, /--path requires a directory argument/);
+  }
+});
+
 test("an empty path value is rejected instead of defaulting to the current directory", () => {
   const result = runCli(["--path=", "--help"]);
   assert.equal(result.status, 1, result.stdout);
