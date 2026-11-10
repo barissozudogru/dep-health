@@ -792,8 +792,8 @@ export async function analyze(
   };
 
   return {
-    packageName: pkg.name ?? path.basename(directory),
-    packageVersion: pkg.version ?? "0.0.0",
+    packageName: typeof pkg.name === "string" ? pkg.name : path.basename(directory),
+    packageVersion: typeof pkg.version === "string" ? pkg.version : "0.0.0",
     analyzedAt: new Date(),
     dependencies: results,
     skippedDependencies,

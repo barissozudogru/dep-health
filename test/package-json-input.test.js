@@ -23,6 +23,24 @@ test("rejects a non-object package.json with a useful validation error", async (
   }
 });
 
+test("keeps package metadata strings when package.json has invalid metadata types", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-health-package-json-"));
+  try {
+    fs.writeFileSync(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: 42, version: 7 })
+    );
+
+    const result = await analyze(dir);
+    assert.equal(result.packageName, path.basename(dir));
+    assert.equal(result.packageVersion, "0.0.0");
+    assert.equal(typeof result.packageName, "string");
+    assert.equal(typeof result.packageVersion, "string");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("rejects conflicting dependency filters instead of analyzing nothing", async () => {
   await assert.rejects(
     analyze(process.cwd(), { prodOnly: true, devOnly: true }),
