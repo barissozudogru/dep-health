@@ -41,6 +41,22 @@ test("keeps package metadata strings when package.json has invalid metadata type
   }
 });
 
+test("uses safe metadata fallbacks for empty package metadata strings", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-health-package-json-"));
+  try {
+    fs.writeFileSync(
+      path.join(dir, "package.json"),
+      JSON.stringify({ name: "", version: "   " })
+    );
+
+    const result = await analyze(dir);
+    assert.equal(result.packageName, path.basename(dir));
+    assert.equal(result.packageVersion, "0.0.0");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("rejects conflicting dependency filters instead of analyzing nothing", async () => {
   await assert.rejects(
     analyze(process.cwd(), { prodOnly: true, devOnly: true }),
