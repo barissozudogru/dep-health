@@ -443,6 +443,10 @@ function parseDownloadCount(value: unknown): number | null {
     : null;
 }
 
+function isScopedPackageName(name: string): boolean {
+  return /^@[^/\s]+\/[^/\s]+$/.test(name);
+}
+
 /**
  * Reads one bulk downloads response into per-name counts.
  *
@@ -463,7 +467,7 @@ function parseDownloadsBatch(
     batch.length === 1 &&
     isSinglePackageResponse(data) &&
     (data.package === batch[0] ||
-      (data.package === undefined && batch[0].startsWith("@")))
+      (data.package === undefined && isScopedPackageName(batch[0])))
       ? { [batch[0]]: data }
       : data !== null && typeof data === "object"
         ? (data as Record<string, DownloadsResponse | null>)
