@@ -129,3 +129,11 @@ test("a bare response without a package name stays unknown", () => {
     null
   );
 });
+
+test("a bare response for an incomplete scoped name stays unknown", () => {
+  const response = { downloads: 394117801 };
+  assert.equal(
+    parseDownloadsBatchForTest(response, ["@scope"]).get("@scope"),
+    null
+  );
+});
