@@ -444,7 +444,7 @@ function parseDownloadCount(value: unknown): number | null {
 }
 
 function isScopedPackageName(name: string): boolean {
-  return /^@[^/\s]+\/[^/\s]+$/.test(name);
+  return /^@[^@/\s]+\/[^@/\s]+$/.test(name);
 }
 
 /**

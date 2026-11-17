@@ -137,3 +137,11 @@ test("a bare response for an incomplete scoped name stays unknown", () => {
     null
   );
 });
+
+test("a bare response for a malformed scoped name stays unknown", () => {
+  const response = { downloads: 394117801 };
+  assert.equal(
+    parseDownloadsBatchForTest(response, ["@@scope/pkg"]).get("@@scope/pkg"),
+    null
+  );
+});
