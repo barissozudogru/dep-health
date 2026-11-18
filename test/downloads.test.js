@@ -145,3 +145,18 @@ test("a bare response for a malformed scoped name stays unknown", () => {
     null
   );
 });
+
+test("a bare response for a scoped name with unsafe characters stays unknown", () => {
+  const response = { downloads: 394117801 };
+  assert.equal(
+    parseDownloadsBatchForTest(response, ["@scope/pkg?"]).get("@scope/pkg?"),
+    null
+  );
+});
+
+test("a bare response accepts legacy-valid scoped package names", () => {
+  const response = { downloads: 394117801 };
+  for (const name of ["@scope/-pkg", "@scope/~pkg", "@Scope/Pkg"]) {
+    assert.equal(parseDownloadsBatchForTest(response, [name]).get(name), 394117801);
+  }
+});
