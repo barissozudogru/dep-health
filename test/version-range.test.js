@@ -43,6 +43,7 @@ test("handles space-separated range bounds by selecting the first version", () =
 test("normalizes npm wildcard range bounds to their lower version", () => {
   assert.equal(stripVersionRangeForTest("1.2.x"), "1.2.0");
   assert.equal(stripVersionRangeForTest("v1.2.x"), "1.2.0");
+  assert.equal(stripVersionRangeForTest("V1.2.x"), "1.2.0");
   assert.equal(stripVersionRangeForTest("v1.x"), "1.0.0");
   assert.deepEqual(computeVersionDeltaForTest(stripVersionRangeForTest("1.x"), "2.0.0"), {
     major: 1,

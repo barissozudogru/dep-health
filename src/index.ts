@@ -526,7 +526,7 @@ function stripVersionRange(version: string): string {
   const operator = firstBound.match(/^(?:\^|~|>=|<=|>|<|=)\s*/)?.[0] ?? "";
   const bound = firstBound.slice(operator.length).trim().split(/\s+/)[0];
   if (!/[xX*]/.test(bound)) return bound;
-  const wildcard = bound.match(/^v?(\d+)(?:\.([xX*]|\d+))?(?:\.([xX*]))?$/);
+  const wildcard = bound.match(/^v?(\d+)(?:\.([xX*]|\d+))?(?:\.([xX*]))?$/i);
   if (!wildcard) {
     return bound;
   }
