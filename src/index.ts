@@ -524,7 +524,15 @@ function stripVersionRange(version: string): string {
   const trimmed = version.trim();
   const firstBound = trimmed.split("||").map((part) => part.trim()).find(Boolean) ?? "";
   const operator = firstBound.match(/^(?:\^|~|>=|<=|>|<|=)\s*/)?.[0] ?? "";
-  return firstBound.slice(operator.length).trim().split(/\s+/)[0];
+  const bound = firstBound.slice(operator.length).trim().split(/\s+/)[0];
+  if (!/[xX*]/.test(bound)) return bound;
+  const wildcard = bound.match(/^v?(\d+)(?:\.([xX*]|\d+))?(?:\.([xX*]))?$/);
+  if (!wildcard) {
+    return bound;
+  }
+  const minor = wildcard[2] && /^[xX*]$/.test(wildcard[2]) ? "0" : wildcard[2] ?? "0";
+  const patch = wildcard[3] && /^[xX*]$/.test(wildcard[3]) ? "0" : wildcard[3] ?? "0";
+  return `${wildcard[1]}.${minor}.${patch}`;
 }
 
 function isNotFound(message: string): boolean {
