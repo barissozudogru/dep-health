@@ -444,7 +444,9 @@ function parseDownloadCount(value: unknown): number | null {
 }
 
 function isScopedPackageName(name: string): boolean {
-  return /^@[^@/\s]+\/[^@/\s]+$/.test(name);
+  // Keep the legacy npm characters accepted here, including uppercase, `-`,
+  // and `~`, while rejecting characters that cannot be part of a URL-safe name.
+  return /^@[A-Za-z0-9._~-]+\/[A-Za-z0-9._~-]+$/.test(name);
 }
 
 /**
