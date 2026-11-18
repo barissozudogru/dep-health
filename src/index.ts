@@ -22,6 +22,14 @@ function isRetryableStatus(status: number): boolean {
   return status === 429 || (status >= 500 && status < 600);
 }
 
+function parseRetryAfter(value: string | string[] | undefined): number | null {
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) return seconds >= 0 ? seconds * 1000 : null;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? null : Math.max(0, timestamp - Date.now());
+}
+
 function isRedirectStatus(status: number): boolean {
   return (
     status === 301 ||
@@ -56,15 +64,12 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
         return;
       }
       if (isRetryableStatus(res.statusCode ?? 0)) {
-        const retryAfter = Number(res.headers["retry-after"]);
+        const retryAfterMs = parseRetryAfter(res.headers["retry-after"]);
         res.resume();
         reject(
           Object.assign(new Error(`HTTP_${res.statusCode}:${url}`), {
             retryable: true,
-            retryAfterMs:
-              Number.isFinite(retryAfter) && retryAfter >= 0
-                ? retryAfter * 1000
-                : null,
+            retryAfterMs,
           })
         );
         return;
