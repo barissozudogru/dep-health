@@ -429,6 +429,7 @@ async function fetchJsonWithRetry<T>(url: string, attempts = 4): Promise<T> {
  * scored differently.
  */
 const BULK_BATCH_SIZE = 100;
+const MAX_PACKAGE_NAME_LENGTH = 214;
 
 function isSinglePackageResponse(
   data: DownloadsResponse | Record<string, DownloadsResponse | null>
@@ -452,6 +453,16 @@ function isScopedPackageName(name: string): boolean {
   // Keep the legacy npm characters accepted here, including uppercase, `-`,
   // and `~`, while rejecting characters that cannot be part of a URL-safe name.
   return /^@[A-Za-z0-9._~-]+\/[A-Za-z0-9._~-]+$/.test(name);
+}
+
+function isValidPackageName(name: string): boolean {
+  if (name.length === 0 || name.length > MAX_PACKAGE_NAME_LENGTH) return false;
+  if (name.startsWith("@")) {
+    if (!isScopedPackageName(name)) return false;
+    const [scope, packageName] = name.slice(1).split("/");
+    return !/^[._]/.test(scope) && !/^[._]/.test(packageName);
+  }
+  return /^[A-Za-z0-9._~-]+$/.test(name) && !/^[._]/.test(name);
 }
 
 /**
@@ -707,6 +718,7 @@ function collectDeclaredDependencies(
         entry[0] === entry[0].trim() &&
         entry[0].length > 0 &&
         !/\s/.test(entry[0]) &&
+        isValidPackageName(entry[0]) &&
         typeof entry[1] === "string"
     );
   }
