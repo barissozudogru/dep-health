@@ -139,3 +139,22 @@ test("does not collect dependency names with internal whitespace", () => {
     []
   );
 });
+
+test("does not collect dependency names that violate npm naming rules", () => {
+  const overlongName = "a".repeat(215);
+  assert.deepEqual(
+    collectDeclaredDependenciesForTest({
+      dependencies: {
+        "not,a-package": "^1.0.0",
+        ".foo": "^1.0.0",
+        _foo: "^1.0.0",
+        ".": "^1.0.0",
+        _: "^1.0.0",
+        "@scope/.foo": "^1.0.0",
+        [overlongName]: "^1.0.0",
+        valid: "^2.0.0",
+      },
+    }),
+    [["valid", "^2.0.0", false]]
+  );
+});
