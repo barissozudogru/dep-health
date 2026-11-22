@@ -620,7 +620,7 @@ async function analyzePackage(
 
   const latestVersionData: VersionData =
     registry.versions?.[latestVersion] ?? {};
-  const deprecated = !!latestVersionData.deprecated;
+  const deprecated = latestVersionData.deprecated !== undefined;
   const deprecationMessage =
     typeof latestVersionData.deprecated === "string"
       ? latestVersionData.deprecated
