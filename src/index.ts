@@ -624,7 +624,10 @@ async function analyzePackage(
 
   const latestVersionData: VersionData =
     registry.versions?.[latestVersion] ?? {};
-  const deprecated = latestVersionData.deprecated !== undefined;
+  // The registry uses a string, including an empty string, as the deprecation
+  // marker. Ignore malformed boolean or null values instead of treating any
+  // present property as a deprecation.
+  const deprecated = typeof latestVersionData.deprecated === "string";
   const deprecationMessage =
     typeof latestVersionData.deprecated === "string"
       ? latestVersionData.deprecated
