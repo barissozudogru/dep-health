@@ -25,7 +25,9 @@ function isRetryableStatus(status: number): boolean {
 function parseRetryAfter(value: string | string[] | undefined): number | null {
   if (typeof value !== "string" || value.trim() === "") return null;
   const seconds = Number(value);
-  if (Number.isFinite(seconds)) return seconds >= 0 ? seconds * 1000 : null;
+  if (Number.isFinite(seconds)) {
+    return seconds >= 0 && !Object.is(seconds, -0) ? seconds * 1000 : null;
+  }
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? null : Math.max(0, timestamp - Date.now());
 }

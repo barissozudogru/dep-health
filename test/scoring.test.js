@@ -206,6 +206,41 @@ test("a negative Retry-After header uses exponential backoff", async () => {
   }
 });
 
+test("a signed-zero Retry-After header uses exponential backoff", async () => {
+  const originalGet = http.get;
+  let calls = 0;
+  http.get = (url, options, callback) => {
+    const request = new EventEmitter();
+    queueMicrotask(() => {
+      const response = new EventEmitter();
+      response.resume = () => {};
+      if (calls++ === 0) {
+        response.statusCode = 429;
+        response.headers = { "retry-after": "-0" };
+      } else {
+        response.statusCode = 200;
+        response.headers = {};
+        queueMicrotask(() => {
+          response.emit("data", Buffer.from(JSON.stringify({ ok: true })));
+          response.emit("end");
+        });
+      }
+      callback(response);
+    });
+    return request;
+  };
+
+  try {
+    const start = Date.now();
+    const data = await fetchJsonWithRetryForTest("http://retry.test/signed-zero");
+    assert.deepEqual(data, { ok: true });
+    assert.equal(calls, 2);
+    assert.ok(Date.now() - start >= 350, "must use the first exponential backoff");
+  } finally {
+    http.get = originalGet;
+  }
+});
+
 test("rejects a retry count that would perform no requests", async () => {
   await assert.rejects(
     fetchJsonWithRetryForTest("http://retry.test/unused", 0),
