@@ -206,6 +206,15 @@ test("a negative Retry-After header uses exponential backoff", async () => {
   }
 });
 
+test("rejects a retry count that would perform no requests", async () => {
+  await assert.rejects(
+    fetchJsonWithRetryForTest("http://retry.test/unused", 0),
+    (error) =>
+      error instanceof RangeError &&
+      error.message === "attempts must be a positive integer"
+  );
+});
+
 test("an HTTP-date Retry-After header controls the retry delay", async () => {
   const originalGet = http.get;
   let calls = 0;

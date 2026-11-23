@@ -401,6 +401,10 @@ function sleep(ms: number): Promise<void> {
  * runs and a --min-score gate in CI failed at random.
  */
 async function fetchJsonWithRetry<T>(url: string, attempts = 4): Promise<T> {
+  if (!Number.isInteger(attempts) || attempts < 1) {
+    throw new RangeError("attempts must be a positive integer");
+  }
+
   let lastErr: unknown;
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
