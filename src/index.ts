@@ -57,7 +57,14 @@ function fetchJson<T>(url: string, redirectCount = 0): Promise<T> {
           reject(new Error(`REDIRECT_NO_LOCATION:${url}`));
           return;
         }
-        resolve(fetchJson<T>(new URL(location, url).toString(), redirectCount + 1));
+        let redirectedUrl: string;
+        try {
+          redirectedUrl = new URL(location, url).toString();
+        } catch {
+          reject(new Error(`REDIRECT_INVALID_LOCATION:${url}`));
+          return;
+        }
+        resolve(fetchJson<T>(redirectedUrl, redirectCount + 1));
         return;
       }
       if (res.statusCode === 404) {

@@ -419,3 +419,42 @@ test("resolves relative HTTP redirects against the current URL", async () => {
   }
 });
 
+test("rejects a redirect with an invalid location instead of throwing", async () => {
+  const originalGet = http.get;
+  const uncaughtErrors = [];
+  const onUncaughtException = (error) => uncaughtErrors.push(error);
+  process.once("uncaughtException", onUncaughtException);
+  http.get = (url, options, callback) => {
+    const request = new EventEmitter();
+    queueMicrotask(() => {
+      const response = new EventEmitter();
+      response.statusCode = 302;
+      response.headers = { location: "http://[" };
+      response.resume = () => {};
+      callback(response);
+    });
+    return request;
+  };
+
+  try {
+    const result = await Promise.race([
+      fetchJsonWithRetryForTest("http://redirect.test/start").then(
+        () => ({ type: "resolved" }),
+        (error) => ({ type: "rejected", error })
+      ),
+      new Promise((resolve) =>
+        setTimeout(() => resolve({ type: "timed out" }), 100)
+      ),
+    ]);
+    assert.equal(result.type, "rejected");
+    assert.match(
+      result.error.message,
+      /REDIRECT_INVALID_LOCATION:http:\/\/redirect\.test\/start/
+    );
+    assert.deepEqual(uncaughtErrors, []);
+  } finally {
+    process.removeListener("uncaughtException", onUncaughtException);
+    http.get = originalGet;
+  }
+});
+
