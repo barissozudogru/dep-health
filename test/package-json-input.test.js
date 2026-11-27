@@ -6,6 +6,15 @@ import path from "node:path";
 import test from "node:test";
 import { analyze } from "../dist/index.js";
 
+test("rejects an empty analysis directory instead of reading the current directory", async () => {
+  await assert.rejects(
+    analyze(""),
+    (error) =>
+      error instanceof Error &&
+      error.message === "analysis directory must be a non-empty string"
+  );
+});
+
 test("rejects a non-object package.json with a useful validation error", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dep-health-package-json-"));
   try {

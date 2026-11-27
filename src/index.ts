@@ -770,6 +770,10 @@ export async function analyze(
 ): Promise<AnalysisResult> {
   const { prodOnly = false, devOnly = false, onProgress } = options;
 
+  if (typeof directory !== "string" || directory.trim().length === 0) {
+    throw new Error("analysis directory must be a non-empty string");
+  }
+
   if (prodOnly && devOnly) {
     throw new Error("prodOnly and devOnly cannot be used together");
   }
