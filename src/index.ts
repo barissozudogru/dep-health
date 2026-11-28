@@ -627,8 +627,10 @@ async function analyzePackage(
   const installedVersion = stripVersionRange(installedRange);
 
   // Last publish time from the registry time object
-  const lastPublishStr =
-    registry.time?.[latestVersion] ?? registry.time?.modified ?? null;
+  // `modified` is packument metadata time, not the selected release's publish
+  // time. Falling back to it can make a version with missing release metadata
+  // look freshly published.
+  const lastPublishStr = registry.time?.[latestVersion] ?? null;
   const lastPublished = parsePublishedDate(lastPublishStr);
 
   const latestVersionData: VersionData =
